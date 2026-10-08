@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AGRO OSINT</title>
-  <!-- Google Fonts for modern monospace / sans-serif -->
+  <title>AGRO OSINT // EMAIL RECON</title>
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     /* reset & base */
@@ -18,7 +18,7 @@
       background-color: #0a0a0a;
       color: #e0e0e0;
       font-family: 'Space Grotesk', sans-serif;
-      overflow: hidden; /* prevent scroll for fullscreen 3d */
+      overflow: hidden;
       height: 100vh;
       width: 100vw;
       position: relative;
@@ -40,7 +40,7 @@
       z-index: 0;
     }
 
-    /* ----- UI OVERLAY (fixed, black with white accents) ----- */
+    /* ----- UI OVERLAY ----- */
     .ui-overlay {
       position: fixed;
       top: 0;
@@ -48,16 +48,16 @@
       width: 100%;
       height: 100%;
       z-index: 10;
-      pointer-events: none; /* allow mouse events to pass to canvas for 3D */
+      pointer-events: none;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       padding: 2rem 2.5rem;
     }
 
-    /* header section */
+    /* header */
     .header {
-      pointer-events: none; /* children can re-enable if needed */
+      pointer-events: none;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
@@ -120,7 +120,7 @@
       padding-bottom: 0.1rem;
     }
 
-    /* footer / status */
+    /* footer */
     .footer {
       pointer-events: none;
       display: flex;
@@ -162,42 +162,7 @@
       100% { opacity: 0.6; box-shadow: 0 0 4px #4aff8c; }
     }
 
-    /* info panels – subtle white borders */
-    .info-panel {
-      pointer-events: none;
-      position: absolute;
-      bottom: 6rem;
-      right: 2.5rem;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 0.8rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      z-index: 15;
-    }
-
-    .info-panel .line {
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
-    .info-panel .line .key {
-      color: #555;
-    }
-
-    .info-panel .line .val {
-      color: #ddd;
-      font-weight: 400;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
-      padding-bottom: 0.1rem;
-    }
-
-    /* tiny coordinate overlay */
+    /* coordinates */
     .coords {
       pointer-events: none;
       position: absolute;
@@ -215,6 +180,324 @@
       color: #8a8a8a;
     }
 
+    /* ----- EMAIL LOOKUP PANEL (right side, interactive) ----- */
+    .email-panel {
+      pointer-events: auto;
+      position: absolute;
+      top: 50%;
+      right: 2.5rem;
+      transform: translateY(-50%);
+      width: 320px;
+      max-width: 90vw;
+      z-index: 50;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 2px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      padding: 1.5rem 1.4rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: #ccc;
+      transition: border-color 0.2s;
+    }
+
+    .email-panel:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 0.7rem;
+    }
+
+    .panel-header h2 {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      color: #fff;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-header h2 .icon {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    .panel-header .badge {
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0.2rem 0.5rem;
+      border-radius: 1px;
+      color: #aaa;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* input group */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .input-group label {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: #777;
+      text-transform: uppercase;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .input-wrapper input {
+      flex: 1;
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 0.6rem 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      outline: none;
+      border-radius: 2px;
+      transition: border-color 0.2s, background 0.2s;
+      letter-spacing: 0.02em;
+    }
+
+    .input-wrapper input:focus {
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(30, 30, 30, 0.9);
+    }
+
+    .input-wrapper input::placeholder {
+      color: #4a4a4a;
+      font-size: 0.7rem;
+    }
+
+    .input-wrapper button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      white-space: nowrap;
+    }
+
+    .input-wrapper button:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .input-wrapper button:active {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0.97);
+    }
+
+    .input-wrapper button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* scan status */
+    .scan-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.6rem;
+      color: #777;
+      padding: 0.3rem 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .scan-status .status-text {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .scan-status .status-text .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #4aff8c;
+      box-shadow: 0 0 6px #4aff8c;
+      animation: pulse 2s infinite;
+    }
+
+    .scan-status .status-text .dot.scanning {
+      background: #ffaa33;
+      box-shadow: 0 0 6px #ffaa33;
+      animation: pulse 1s infinite;
+    }
+
+    .scan-status .status-text .dot.error {
+      background: #ff4a4a;
+      box-shadow: 0 0 6px #ff4a4a;
+      animation: none;
+    }
+
+    .scan-status .status-text .dot.done {
+      background: #4aff8c;
+      box-shadow: 0 0 6px #4aff8c;
+      animation: none;
+    }
+
+    /* results area */
+    .results-container {
+      max-height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      padding-right: 0.3rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+      transition: opacity 0.2s;
+    }
+
+    .results-container::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .results-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .results-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .result-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 0.6rem 0.8rem;
+      border-radius: 1px;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      transition: background 0.2s, border-color 0.2s;
+      animation: fadeIn 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .result-item:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-left-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .result-item .source {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #aaa;
+      font-size: 0.6rem;
+      letter-spacing: 0.05em;
+    }
+
+    .result-item .source .tag {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.1rem 0.4rem;
+      border-radius: 1px;
+      font-size: 0.55rem;
+      color: #ccc;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .result-item .data {
+      color: #e0e0e0;
+      font-weight: 400;
+      word-break: break-word;
+    }
+
+    .result-item .data .highlight {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0 0.2rem;
+      border-radius: 1px;
+    }
+
+    .result-item .meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.55rem;
+      color: #555;
+      margin-top: 0.1rem;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 0.5rem;
+      color: #555;
+      font-size: 0.65rem;
+      text-align: center;
+      gap: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .empty-state .icon {
+      font-size: 1.5rem;
+      opacity: 0.3;
+    }
+
+    /* loading spinner */
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* error message */
+    .error-message {
+      background: rgba(255, 80, 80, 0.1);
+      border-left: 2px solid #ff4a4a;
+      color: #ff8a8a;
+      padding: 0.5rem 0.8rem;
+      font-size: 0.65rem;
+      border-radius: 1px;
+      animation: fadeIn 0.2s ease;
+    }
+
     /* 3D canvas */
     #canvas-container {
       position: fixed;
@@ -230,7 +513,7 @@
       cursor: grabbing;
     }
 
-    /* very subtle scanline effect */
+    /* scanlines */
     .scanlines {
       position: fixed;
       top: 0;
@@ -251,9 +534,9 @@
     }
 
     /* Mobile adjustments */
-    @media (max-width: 700px) {
+    @media (max-width: 800px) {
       .ui-overlay {
-        padding: 1.5rem;
+        padding: 1.2rem;
       }
       .header-left .brand {
         font-size: 1.4rem;
@@ -265,26 +548,51 @@
         flex-direction: column;
         gap: 0.3rem;
       }
-      .info-panel {
-        display: none;
-      }
       .coords {
         display: none;
+      }
+      .email-panel {
+        position: fixed;
+        top: auto;
+        bottom: 1.2rem;
+        right: 1.2rem;
+        left: 1.2rem;
+        width: auto;
+        max-width: none;
+        transform: none;
+        padding: 1.2rem;
+        max-height: 50vh;
+        overflow: hidden;
+      }
+      .results-container {
+        max-height: 180px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .email-panel {
+        padding: 1rem;
+      }
+      .input-wrapper {
+        flex-direction: column;
+      }
+      .input-wrapper button {
+        padding: 0.6rem;
+        justify-content: center;
       }
     }
   </style>
 </head>
 <body>
-  <!-- 3D canvas will be injected here by three.js -->
+  <!-- 3D canvas -->
   <div id="canvas-container"></div>
 
-  <!-- UI overlay with white accents -->
+  <!-- UI overlay -->
   <div class="ui-overlay">
-    <!-- Header -->
     <div class="header">
       <div class="header-left">
         <div class="brand">AGRO<span>OSINT</span></div>
-        <div style="font-size: 0.6rem; letter-spacing: 0.3em; color: #666;">GEOSPATIAL INTELLIGENCE / v.2.4.1</div>
+        <div style="font-size: 0.6rem; letter-spacing: 0.3em; color: #666;">EMAIL RECON / v.2.4.1</div>
       </div>
       <div class="header-right">
         <div>
@@ -302,7 +610,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="footer">
       <div class="status">
         <span><span class="dot"></span> UPLINK: SECURE</span>
@@ -312,23 +619,52 @@
     </div>
   </div>
 
-  <!-- Additional floating info -->
-  <div class="info-panel">
-    <div class="line"><span class="key">TARGET</span> <span class="val">GLOBAL</span></div>
-    <div class="line"><span class="key">SENSORS</span> <span class="val">12 ACTIVE</span></div>
-    <div class="line"><span class="key">DATASTREAM</span> <span class="val">LIVE</span></div>
-  </div>
-
+  <!-- Coordinates -->
   <div class="coords">
     <div>LAT <span>37.7749° N</span></div>
     <div>LON <span>122.4194° W</span></div>
     <div>ALT <span>45.2 M</span></div>
   </div>
 
-  <!-- scanline overlay for mood -->
+  <!-- ----- EMAIL LOOKUP PANEL ----- -->
+  <div class="email-panel" id="emailPanel">
+    <div class="panel-header">
+      <h2><span class="icon">✉</span> EMAIL RECON</h2>
+      <span class="badge">LIVE SCAN</span>
+    </div>
+
+    <div class="input-group">
+      <label for="emailInput">TARGET EMAIL ADDRESS</label>
+      <div class="input-wrapper">
+        <input type="email" id="emailInput" placeholder="name@example.com" autocomplete="off" spellcheck="false">
+        <button id="scanBtn">
+          <span>SCAN</span>
+          <span style="font-size:0.8rem;">↗</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="scan-status">
+      <div class="status-text">
+        <span class="dot done" id="statusDot"></span>
+        <span id="statusLabel">READY</span>
+      </div>
+      <span id="scanCount">0 SOURCES</span>
+    </div>
+
+    <div class="results-container" id="resultsContainer">
+      <div class="empty-state">
+        <div class="icon">◈</div>
+        <div>ENTER AN EMAIL TO BEGIN<br>OSINT SCAN</div>
+        <div style="font-size:0.55rem; color:#444; margin-top:0.3rem;">DARK WEB · PASTE SITES · BREACHES · SOCIAL</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scanlines -->
   <div class="scanlines"></div>
 
-  <!-- Three.js from CDN -->
+  <!-- Three.js -->
   <script type="importmap">
     {
       "imports": {
@@ -341,23 +677,19 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
 
-    // --- setup scene ---
+    // --- 3D SCENE (kept exactly as before) ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0a); // deep black
+    scene.background = new THREE.Color(0x0a0a0a);
 
-    // --- camera (perspective) ---
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 1.5, 8);
 
-    // --- renderer ---
     const container = document.getElementById('canvas-container');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = false; // not needed
     container.appendChild(renderer.domElement);
 
-    // --- controls (mouse drag) ---
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -365,28 +697,26 @@
     controls.autoRotateSpeed = 1.2;
     controls.enableZoom = true;
     controls.zoomSpeed = 0.8;
-    controls.enablePan = false; // keep focus on the object
+    controls.enablePan = false;
     controls.rotateSpeed = 0.8;
     controls.minDistance = 3;
     controls.maxDistance = 14;
     controls.target.set(0, 0, 0);
 
-    // --- subtle lights ---
+    // lights
     const ambientLight = new THREE.AmbientLight(0x404060);
     scene.add(ambientLight);
-
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(1, 2, 1);
     scene.add(dirLight);
-
     const backLight = new THREE.PointLight(0x4466cc, 0.3);
     backLight.position.set(-2, -1, -3);
     scene.add(backLight);
 
-    // --- 3D OBJECT: a wireframe globe with white accents ---
+    // globe group
     const group = new THREE.Group();
 
-    // 1. main wireframe sphere (white, thin lines)
+    // wireframe sphere
     const sphereGeo = new THREE.SphereGeometry(2.2, 36, 24);
     const sphereMat = new THREE.MeshBasicMaterial({
       color: 0xffffff,
@@ -397,26 +727,18 @@
     const wireframeSphere = new THREE.Mesh(sphereGeo, sphereMat);
     group.add(wireframeSphere);
 
-    // 2. inner dotted sphere / particle system for subtle texture
+    // particles
     const particleCount = 1800;
     const particlesGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
-    
     for (let i = 0; i < particleCount; i++) {
-      // spherical distribution with slight random radius variation
       const radius = 2.21 + (Math.random() - 0.5) * 0.15;
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos((Math.random() * 2) - 1);
-      
-      const x = radius * Math.sin(phi) * Math.cos(theta);
-      const y = radius * Math.sin(phi) * Math.sin(theta);
-      const z = radius * Math.cos(phi);
-      
-      positions[i*3] = x;
-      positions[i*3+1] = y;
-      positions[i*3+2] = z;
+      positions[i*3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i*3+1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i*3+2] = radius * Math.cos(phi);
     }
-    
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const particlesMat = new THREE.PointsMaterial({
       color: 0xffffff,
@@ -428,10 +750,8 @@
     const particles = new THREE.Points(particlesGeo, particlesMat);
     group.add(particles);
 
-    // 3. rings / orbits (white, slight opacity)
+    // rings
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.2, transparent: true });
-
-    // ring 1 - equatorial
     const ring1Points = [];
     const ring1Radius = 2.5;
     for (let i = 0; i <= 64; i++) {
@@ -442,15 +762,13 @@
     const ring1 = new THREE.Line(ring1Geo, ringMaterial);
     group.add(ring1);
 
-    // ring 2 - tilted
     const ring2Points = [];
     const ring2Radius = 2.8;
     for (let i = 0; i <= 64; i++) {
       const angle = (i / 64) * Math.PI * 2;
       const x = Math.cos(angle) * ring2Radius;
-      const y = Math.sin(angle) * ring2Radius * 0.3; // flatten
+      const y = Math.sin(angle) * ring2Radius * 0.3;
       const z = Math.sin(angle) * ring2Radius * 0.8;
-      // rotate around x axis
       const rotatedY = y * Math.cos(0.8) - z * Math.sin(0.8);
       const rotatedZ = y * Math.sin(0.8) + z * Math.cos(0.8);
       ring2Points.push(new THREE.Vector3(x, rotatedY, rotatedZ));
@@ -459,7 +777,6 @@
     const ring2 = new THREE.Line(ring2Geo, ringMaterial);
     group.add(ring2);
 
-    // ring 3 - another tilt
     const ring3Points = [];
     const ring3Radius = 2.0;
     for (let i = 0; i <= 64; i++) {
@@ -473,7 +790,7 @@
     const ring3 = new THREE.Line(ring3Geo, ringMaterial);
     group.add(ring3);
 
-    // 4. small glowing dots at cardinal points on the main sphere
+    // dots
     const dotMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, blending: THREE.AdditiveBlending });
     const dotPositions = [
       [2.22, 0, 0], [-2.22, 0, 0], [0, 2.22, 0], [0, -2.22, 0], [0, 0, 2.22], [0, 0, -2.22]
@@ -484,7 +801,7 @@
     const dots = new THREE.Points(dotGeo, dotMaterial);
     group.add(dots);
 
-    // 5. a central glowing core (tiny sphere)
+    // core
     const coreGeo = new THREE.SphereGeometry(0.08, 16, 16);
     const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0x88aaff });
     const core = new THREE.Mesh(coreGeo, coreMat);
@@ -492,12 +809,11 @@
 
     scene.add(group);
 
-    // --- additional floating white particles around the scene (very subtle) ---
+    // stars
     const starCount = 600;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount * 3; i += 3) {
-      // spread in a larger volume
       starPositions[i] = (Math.random() - 0.5) * 40;
       starPositions[i+1] = (Math.random() - 0.5) * 40;
       starPositions[i+2] = (Math.random() - 0.5) * 40;
@@ -507,42 +823,232 @@
     const stars = new THREE.Points(starGeo, starMat);
     scene.add(stars);
 
-    // --- animation loop ---
+    // animate
     let clock = new THREE.Clock();
-
     function animate() {
       const delta = clock.getDelta();
-      const elapsedTime = performance.now() * 0.001; // seconds
-
-      // subtle rotation of the entire group (in addition to autoRotate)
+      const elapsedTime = performance.now() * 0.001;
       group.rotation.y += 0.0005;
       group.rotation.x = Math.sin(elapsedTime * 0.1) * 0.05;
       group.rotation.z = Math.cos(elapsedTime * 0.15) * 0.03;
-
-      // update controls (auto-rotate enabled)
       controls.update();
-
-      // slight pulsating of the core
       core.scale.setScalar(1 + Math.sin(elapsedTime * 8) * 0.15);
-
-      // rotate stars very slowly
       stars.rotation.y += 0.0001;
-
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
-
     animate();
 
-    // --- resize handler ---
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // --- disable right-click context menu on canvas for cleaner look (optional) ---
     renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // =============================================
+    // EMAIL LOOKUP SIMULATION
+    // =============================================
+    const emailInput = document.getElementById('emailInput');
+    const scanBtn = document.getElementById('scanBtn');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const statusDot = document.getElementById('statusDot');
+    const statusLabel = document.getElementById('statusLabel');
+    const scanCount = document.getElementById('scanCount');
+
+    // Simulated OSINT data sources with realistic-looking results
+    const sources = [
+      { name: 'Pastebin', tag: 'PASTE', weight: 0.7 },
+      { name: 'HaveIBeenPwned', tag: 'BREACH', weight: 0.85 },
+      { name: 'DeHashed', tag: 'LEAK', weight: 0.8 },
+      { name: 'Hunter.io', tag: 'CORP', weight: 0.6 },
+      { name: 'GitHub', tag: 'CODE', weight: 0.5 },
+      { name: 'Twitter/X', tag: 'SOCIAL', weight: 0.65 },
+      { name: 'LinkedIn', tag: 'PROF', weight: 0.55 },
+      { name: 'DarkWeb Index', tag: 'DARK', weight: 0.9 },
+      { name: 'Gravatar', tag: 'AVATAR', weight: 0.4 },
+      { name: 'IntelX', tag: 'INTEL', weight: 0.75 },
+      { name: 'Snusbase', tag: 'DB', weight: 0.8 },
+      { name: 'LeakCheck', tag: 'LEAK', weight: 0.7 },
+      { name: 'EmailRep', tag: 'REP', weight: 0.5 },
+      { name: 'WhatBreach', tag: 'BREACH', weight: 0.6 },
+      { name: 'GhostProject', tag: 'DARK', weight: 0.85 },
+      { name: 'Scylla', tag: 'DB', weight: 0.75 },
+      { name: 'PSBDMP', tag: 'PASTE', weight: 0.65 },
+      { name: 'PasteLert', tag: 'PASTE', weight: 0.6 },
+    ];
+
+    // Generate realistic-looking result data
+    function generateResult(email, source) {
+      const templates = [
+        () => `<span class="highlight">${email}</span> found in <span class="highlight">${Math.floor(Math.random() * 5 + 1)}</span> database records`,
+        () => `Credentials leaked: <span class="highlight">${Math.random().toString(36).substring(2, 10)}</span> (hashed)`,
+        () => `Associated with <span class="highlight">${['John', 'Jane', 'Alex', 'Sam', 'Chris', 'Jordan', 'Taylor', 'Morgan'][Math.floor(Math.random() * 8)]} ${['Smith', 'Doe', 'Johnson', 'Brown', 'Lee', 'Garcia', 'Miller', 'Davis'][Math.floor(Math.random() * 8)]}</span>`,
+        () => `IP: <span class="highlight">${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}</span>`,
+        () => `Registered on <span class="highlight">${['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'TikTok', 'Reddit'][Math.floor(Math.random() * 6)]}</span>`,
+        () => `Last seen: <span class="highlight">${new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</span>`,
+        () => `Password hint: <span class="highlight">${['petname', 'birthyear', 'city', 'hobby', 'sports', 'music'][Math.floor(Math.random() * 6)]}${Math.floor(Math.random() * 100)}</span>`,
+        () => `Found in <span class="highlight">${['Collection #1', 'AntiPublic', 'Exploit.in', 'LinkedIn Scrape', 'MySpace', 'Adobe', 'Dropbox', 'Tumblr'][Math.floor(Math.random() * 8)]}</span> breach`,
+        () => `Gravatar hash: <span class="highlight">${Math.random().toString(36).substring(2, 15)}</span>`,
+        () => `Domain reputation: <span class="highlight">${['TRUSTED', 'NEUTRAL', 'SUSPICIOUS', 'MALICIOUS'][Math.floor(Math.random() * 4)]}</span>`,
+      ];
+      const template = templates[Math.floor(Math.random() * templates.length)];
+      const confidence = Math.floor(Math.random() * 30 + 70); // 70-99
+      const date = new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString();
+      
+      return {
+        source: source.name,
+        tag: source.tag,
+        text: template(),
+        confidence,
+        date,
+        weight: source.weight
+      };
+    }
+
+    // Update UI state
+    function setStatus(state, label) {
+      statusDot.className = 'dot ' + state;
+      statusLabel.textContent = label;
+    }
+
+    function setScanCount(count) {
+      scanCount.textContent = count + ' SOURCES';
+    }
+
+    // Clear results
+    function clearResults() {
+      resultsContainer.innerHTML = '';
+      setScanCount(0);
+      setStatus('done', 'READY');
+    }
+
+    // Show empty state
+    function showEmptyState() {
+      resultsContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">◈</div>
+          <div>ENTER AN EMAIL TO BEGIN<br>OSINT SCAN</div>
+          <div style="font-size:0.55rem; color:#444; margin-top:0.3rem;">DARK WEB · PASTE SITES · BREACHES · SOCIAL</div>
+        </div>
+      `;
+    }
+
+    // Show error
+    function showError(msg) {
+      const errDiv = document.createElement('div');
+      errDiv.className = 'error-message';
+      errDiv.textContent = msg;
+      resultsContainer.innerHTML = '';
+      resultsContainer.appendChild(errDiv);
+      setScanCount(0);
+      setStatus('error', 'ERROR');
+    }
+
+    // Simulate scanning with progressive results
+    async function performScan(email) {
+      // Validate email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showError('INVALID EMAIL FORMAT. PLEASE ENTER A VALID ADDRESS.');
+        return;
+      }
+
+      // Disable button during scan
+      scanBtn.disabled = true;
+      scanBtn.innerHTML = '<span class="spinner"></span> SCANNING...';
+      setStatus('scanning', 'SCANNING');
+      resultsContainer.innerHTML = '';
+      setScanCount(0);
+
+      // Simulate progressive discovery
+      const foundResults = [];
+      const totalSources = sources.length;
+      const scanDuration = 3500 + Math.random() * 1500; // 3.5-5 seconds
+      const stepTime = scanDuration / totalSources;
+
+      // Shuffle sources for randomness
+      const shuffled = [...sources].sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < shuffled.length; i++) {
+        const source = shuffled[i];
+        // Simulate finding data based on source weight
+        const found = Math.random() < source.weight;
+        
+        if (found) {
+          const result = generateResult(email, source);
+          foundResults.push(result);
+          
+          // Add result to UI
+          const resultEl = document.createElement('div');
+          resultEl.className = 'result-item';
+          resultEl.innerHTML = `
+            <div class="source">
+              <span class="tag">${result.tag}</span>
+              <span>${result.source}</span>
+            </div>
+            <div class="data">${result.text}</div>
+            <div class="meta">
+              <span>CONFIDENCE: ${result.confidence}%</span>
+              <span>${result.date}</span>
+            </div>
+          `;
+          resultsContainer.appendChild(resultEl);
+          resultsContainer.scrollTop = resultsContainer.scrollHeight;
+          
+          setScanCount(foundResults.length);
+        }
+
+        // Update progress
+        const progress = Math.floor(((i + 1) / totalSources) * 100);
+        statusLabel.textContent = `SCANNING ${progress}%`;
+        
+        // Wait for step
+        await new Promise(resolve => setTimeout(resolve, stepTime));
+      }
+
+      // Scan complete
+      if (foundResults.length === 0) {
+        resultsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">✓</div>
+            <div>NO RESULTS FOUND</div>
+            <div style="font-size:0.55rem; color:#444; margin-top:0.3rem;">EMAIL APPEARS CLEAN IN SCANNED SOURCES</div>
+          </div>
+        `;
+        setStatus('done', 'CLEAN');
+      } else {
+        setStatus('done', 'COMPLETE');
+      }
+      
+      setScanCount(foundResults.length);
+      scanBtn.disabled = false;
+      scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.8rem;">↗</span>';
+    }
+
+    // Event listeners
+    scanBtn.addEventListener('click', () => {
+      const email = emailInput.value.trim();
+      if (!email) {
+        showError('PLEASE ENTER AN EMAIL ADDRESS TO SCAN.');
+        return;
+      }
+      performScan(email);
+    });
+
+    emailInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        scanBtn.click();
+      }
+    });
+
+    // Focus input on load
+    window.addEventListener('load', () => {
+      setTimeout(() => emailInput.focus(), 500);
+    });
+
   </script>
 </body>
 </html>
