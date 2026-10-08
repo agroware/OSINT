@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AGRO OSINT // EMAIL RECON</title>
+  <title>AGRO OSINT // MULTI-VECTOR RECON</title>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
@@ -40,256 +40,224 @@
       z-index: 0;
     }
 
-    /* ----- UI OVERLAY ----- */
-    .ui-overlay {
+    /* ----- MAIN LAYOUT ----- */
+    .app-container {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 10;
-      pointer-events: none;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 2rem 2.5rem;
+      z-index: 5;
+      pointer-events: none;
     }
 
-    /* header */
-    .header {
-      pointer-events: none;
+    /* Left side - 3D Globe */
+    .globe-section {
+      flex: 1;
+      position: relative;
+      pointer-events: auto;
+      min-width: 0;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
+    }
+
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+
+    /* Right side - Search Panel */
+    .search-section {
+      width: 580px;
+      max-width: 55vw;
+      height: 100%;
+      position: relative;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      padding: 2rem 2rem 2rem 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(10, 10, 10, 0.6) 15%, rgba(10, 10, 10, 0.95) 100%);
+      overflow: hidden;
+    }
+
+    /* Header inside search section */
+    .top-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       width: 100%;
-      color: #ffffff;
-      text-transform: uppercase;
-      letter-spacing: 0.2em;
-      font-weight: 300;
-      font-size: 0.8rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
       padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      margin-bottom: 1.2rem;
     }
 
-    .header-left {
+    .top-header .brand-block {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.3rem;
     }
 
-    .header-left .brand {
-      font-size: 2rem;
+    .top-header .brand {
+      font-size: 1.8rem;
       font-weight: 600;
       letter-spacing: 0.35em;
       line-height: 1;
       color: #ffffff;
       text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+      text-transform: uppercase;
     }
 
-    .header-left .brand span {
+    .top-header .brand span {
       color: #b0b0b0;
       font-weight: 300;
-      font-size: 1.2rem;
+      font-size: 1rem;
       letter-spacing: 0.2em;
-      margin-left: 0.5rem;
+      margin-left: 0.4rem;
     }
 
-    .header-right {
-      display: flex;
-      gap: 2.5rem;
-      font-size: 0.7rem;
-      color: #a0a0a0;
+    .top-header .subtitle {
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      color: #666;
       font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
     }
 
-    .header-right div {
+    .top-header .meta-info {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.6rem;
+      color: #888;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .top-header .meta-info div {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
     }
 
-    .header-right .label {
-      color: #666;
-      margin-bottom: 0.2rem;
+    .top-header .meta-info .label {
+      color: #555;
+      font-size: 0.5rem;
+      margin-bottom: 0.15rem;
     }
 
-    .header-right .value {
-      color: #fff;
-      font-weight: 400;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    .top-header .meta-info .value {
+      color: #ddd;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
       padding-bottom: 0.1rem;
     }
 
-    /* footer */
-    .footer {
-      pointer-events: none;
+    /* Search Mode Tabs */
+    .mode-tabs {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      width: 100%;
+      gap: 0.3rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .mode-tab {
+      background: rgba(20, 20, 20, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #888;
+      padding: 0.5rem 0.8rem;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      color: #5a5a5a;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 1rem;
-      letter-spacing: 0.15em;
-    }
-
-    .footer .status {
-      display: flex;
-      gap: 2rem;
-    }
-
-    .footer .status span {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .footer .status .dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      background-color: #4aff8c;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #4aff8c;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.6; box-shadow: 0 0 4px #4aff8c; }
-      50% { opacity: 1; box-shadow: 0 0 12px #4aff8c; }
-      100% { opacity: 0.6; box-shadow: 0 0 4px #4aff8c; }
-    }
-
-    /* coordinates */
-    .coords {
-      pointer-events: none;
-      position: absolute;
-      bottom: 6rem;
-      left: 2.5rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      color: #4a4a4a;
-      line-height: 1.6;
+      font-size: 0.6rem;
       letter-spacing: 0.1em;
-      z-index: 15;
-    }
-
-    .coords span {
-      color: #8a8a8a;
-    }
-
-    /* ----- EMAIL LOOKUP PANEL (right side, interactive) ----- */
-    .email-panel {
-      pointer-events: auto;
-      position: absolute;
-      top: 50%;
-      right: 2.5rem;
-      transform: translateY(-50%);
-      width: 320px;
-      max-width: 90vw;
-      z-index: 50;
-      background: rgba(10, 10, 10, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 2px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-      padding: 1.5rem 1.4rem 1.2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      font-family: 'JetBrains Mono', monospace;
-      color: #ccc;
-      transition: border-color 0.2s;
-    }
-
-    .email-panel:hover {
-      border-color: rgba(255, 255, 255, 0.25);
-    }
-
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 0.7rem;
-    }
-
-    .panel-header h2 {
-      font-size: 0.7rem;
-      font-weight: 500;
-      letter-spacing: 0.2em;
-      color: #fff;
       text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.35rem;
+      white-space: nowrap;
     }
 
-    .panel-header h2 .icon {
-      font-size: 0.9rem;
+    .mode-tab .tab-icon {
+      font-size: 0.85rem;
       opacity: 0.7;
     }
 
-    .panel-header .badge {
-      font-size: 0.55rem;
-      letter-spacing: 0.1em;
-      background: rgba(255, 255, 255, 0.08);
-      padding: 0.2rem 0.5rem;
-      border-radius: 1px;
-      color: #aaa;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .mode-tab:hover {
+      background: rgba(40, 40, 40, 0.9);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #ccc;
     }
 
-    /* input group */
-    .input-group {
+    .mode-tab.active {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+      color: #fff;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+    }
+
+    .mode-tab.active .tab-icon {
+      opacity: 1;
+    }
+
+    /* Search Input Area */
+    .search-area {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.7rem;
+      margin-bottom: 1rem;
     }
 
-    .input-group label {
+    .search-area label {
       font-size: 0.6rem;
       letter-spacing: 0.15em;
       color: #777;
       text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    .input-wrapper {
+    .search-input-wrapper {
       display: flex;
       gap: 0.5rem;
     }
 
-    .input-wrapper input {
+    .search-input-wrapper input {
       flex: 1;
-      background: rgba(20, 20, 20, 0.8);
+      background: rgba(15, 15, 15, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
-      padding: 0.6rem 0.7rem;
+      padding: 0.8rem 0.9rem;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       outline: none;
       border-radius: 2px;
       transition: border-color 0.2s, background 0.2s;
       letter-spacing: 0.02em;
     }
 
-    .input-wrapper input:focus {
+    .search-input-wrapper input:focus {
       border-color: rgba(255, 255, 255, 0.5);
-      background: rgba(30, 30, 30, 0.9);
+      background: rgba(25, 25, 25, 0.95);
     }
 
-    .input-wrapper input::placeholder {
+    .search-input-wrapper input::placeholder {
       color: #4a4a4a;
-      font-size: 0.7rem;
+      font-size: 0.75rem;
     }
 
-    .input-wrapper button {
+    .search-input-wrapper button {
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      padding: 0 1rem;
+      padding: 0 1.3rem;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem;
       letter-spacing: 0.1em;
@@ -298,38 +266,41 @@
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.3rem;
+      gap: 0.4rem;
       white-space: nowrap;
+      text-transform: uppercase;
     }
 
-    .input-wrapper button:hover {
+    .search-input-wrapper button:hover {
       background: rgba(255, 255, 255, 0.2);
       border-color: rgba(255, 255, 255, 0.5);
     }
 
-    .input-wrapper button:active {
+    .search-input-wrapper button:active {
       background: rgba(255, 255, 255, 0.3);
       transform: scale(0.97);
     }
 
-    .input-wrapper button:disabled {
+    .search-input-wrapper button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
     }
 
-    /* scan status */
+    /* Scan Status Bar */
     .scan-status {
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 0.6rem;
       color: #777;
-      padding: 0.3rem 0;
+      padding: 0.4rem 0;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-      margin-bottom: 0.2rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      margin-bottom: 0.8rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .scan-status .status-text {
@@ -365,17 +336,23 @@
       animation: none;
     }
 
-    /* results area */
+    @keyframes pulse {
+      0% { opacity: 0.6; box-shadow: 0 0 4px currentColor; }
+      50% { opacity: 1; box-shadow: 0 0 12px currentColor; }
+      100% { opacity: 0.6; box-shadow: 0 0 4px currentColor; }
+    }
+
+    /* Results Container */
     .results-container {
-      max-height: 260px;
+      flex: 1;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 0.6rem;
-      padding-right: 0.3rem;
+      padding-right: 0.4rem;
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-      transition: opacity 0.2s;
+      min-height: 0;
     }
 
     .results-container::-webkit-scrollbar {
@@ -394,15 +371,15 @@
     .result-item {
       background: rgba(255, 255, 255, 0.03);
       border-left: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 0.6rem 0.8rem;
+      padding: 0.7rem 0.9rem;
       border-radius: 1px;
-      font-size: 0.68rem;
-      line-height: 1.5;
+      font-size: 0.7rem;
+      line-height: 1.55;
       transition: background 0.2s, border-color 0.2s;
       animation: fadeIn 0.3s ease;
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 0.3rem;
     }
 
     .result-item:hover {
@@ -413,19 +390,59 @@
     .result-item .source {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.5rem;
       color: #aaa;
       font-size: 0.6rem;
       letter-spacing: 0.05em;
+      font-family: 'JetBrains Mono', monospace;
+      flex-wrap: wrap;
     }
 
     .result-item .source .tag {
       background: rgba(255, 255, 255, 0.1);
-      padding: 0.1rem 0.4rem;
+      padding: 0.15rem 0.5rem;
       border-radius: 1px;
       font-size: 0.55rem;
       color: #ccc;
       border: 1px solid rgba(255, 255, 255, 0.08);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .result-item .source .tag.gaming {
+      background: rgba(100, 150, 255, 0.15);
+      border-color: rgba(100, 150, 255, 0.3);
+      color: #8ab4ff;
+    }
+
+    .result-item .source .tag.discord {
+      background: rgba(88, 101, 242, 0.15);
+      border-color: rgba(88, 101, 242, 0.4);
+      color: #7289da;
+    }
+
+    .result-item .source .tag.steam {
+      background: rgba(23, 105, 170, 0.15);
+      border-color: rgba(23, 105, 170, 0.4);
+      color: #66c0f4;
+    }
+
+    .result-item .source .tag.social {
+      background: rgba(255, 100, 100, 0.12);
+      border-color: rgba(255, 100, 100, 0.3);
+      color: #ff8a8a;
+    }
+
+    .result-item .source .tag.breach {
+      background: rgba(255, 60, 60, 0.15);
+      border-color: rgba(255, 60, 60, 0.4);
+      color: #ff6b6b;
+    }
+
+    .result-item .source .tag.dark {
+      background: rgba(180, 60, 255, 0.12);
+      border-color: rgba(180, 60, 255, 0.3);
+      color: #c48aff;
     }
 
     .result-item .data {
@@ -441,12 +458,25 @@
       border-radius: 1px;
     }
 
+    .result-item .data .game-tag {
+      display: inline-block;
+      background: rgba(100, 200, 100, 0.12);
+      border: 1px solid rgba(100, 200, 100, 0.25);
+      color: #8aff8a;
+      padding: 0 0.3rem;
+      border-radius: 1px;
+      font-size: 0.6rem;
+      margin: 0 0.1rem;
+    }
+
     .result-item .meta {
       display: flex;
       justify-content: space-between;
       font-size: 0.55rem;
       color: #555;
       margin-top: 0.1rem;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.05em;
     }
 
     .empty-state {
@@ -454,20 +484,21 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 2rem 0.5rem;
+      padding: 2.5rem 0.5rem;
       color: #555;
       font-size: 0.65rem;
       text-align: center;
-      gap: 0.5rem;
+      gap: 0.6rem;
       letter-spacing: 0.05em;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .empty-state .icon {
-      font-size: 1.5rem;
-      opacity: 0.3;
+      font-size: 2rem;
+      opacity: 0.25;
     }
 
-    /* loading spinner */
+    /* Loading spinner */
     .spinner {
       display: inline-block;
       width: 12px;
@@ -487,30 +518,97 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* error message */
     .error-message {
       background: rgba(255, 80, 80, 0.1);
       border-left: 2px solid #ff4a4a;
       color: #ff8a8a;
-      padding: 0.5rem 0.8rem;
+      padding: 0.6rem 0.9rem;
       font-size: 0.65rem;
       border-radius: 1px;
       animation: fadeIn 0.2s ease;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    /* 3D canvas */
-    #canvas-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      cursor: grab;
+    /* Footer */
+    .search-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.8rem;
+      margin-top: 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      color: #444;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
-    #canvas-container:active {
-      cursor: grabbing;
+    .search-footer .status-group {
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+    }
+
+    .search-footer .status-group span {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .search-footer .status-group .dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      background-color: #4aff8c;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #4aff8c;
+      animation: pulse 2s infinite;
+    }
+
+    /* Coordinates overlay on globe */
+    .coords-overlay {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: #4a4a4a;
+      line-height: 1.7;
+      letter-spacing: 0.1em;
+      z-index: 15;
+      pointer-events: none;
+      text-transform: uppercase;
+    }
+
+    .coords-overlay span {
+      color: #8a8a8a;
+    }
+
+    /* Globe label */
+    .globe-label {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      color: #555;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      z-index: 15;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .globe-label .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #4aff8c;
+      box-shadow: 0 0 8px #4aff8c;
+      animation: pulse 2s infinite;
     }
 
     /* scanlines */
@@ -529,139 +627,162 @@
       );
       pointer-events: none;
       z-index: 20;
-      opacity: 0.3;
+      opacity: 0.25;
       mix-blend-mode: overlay;
     }
 
-    /* Mobile adjustments */
-    @media (max-width: 800px) {
-      .ui-overlay {
-        padding: 1.2rem;
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .search-section {
+        width: 480px;
+        max-width: 60vw;
       }
-      .header-left .brand {
-        font-size: 1.4rem;
+    }
+
+    @media (max-width: 850px) {
+      .app-container {
+        flex-direction: column-reverse;
       }
-      .header-right {
+      .search-section {
+        width: 100%;
+        max-width: 100%;
+        height: 60vh;
+        padding: 1rem;
+        background: rgba(10, 10, 10, 0.98);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .globe-section {
+        height: 40vh;
+        flex: none;
+      }
+      .top-header .brand {
+        font-size: 1.3rem;
+      }
+      .mode-tab {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.55rem;
+      }
+      .mode-tab .tab-icon {
         display: none;
       }
-      .footer .status {
-        flex-direction: column;
-        gap: 0.3rem;
-      }
-      .coords {
+      .coords-overlay {
         display: none;
       }
-      .email-panel {
-        position: fixed;
-        top: auto;
-        bottom: 1.2rem;
-        right: 1.2rem;
-        left: 1.2rem;
-        width: auto;
-        max-width: none;
-        transform: none;
-        padding: 1.2rem;
-        max-height: 50vh;
-        overflow: hidden;
-      }
-      .results-container {
-        max-height: 180px;
+      .globe-label {
+        display: none;
       }
     }
 
     @media (max-width: 500px) {
-      .email-panel {
-        padding: 1rem;
+      .top-header .meta-info {
+        display: none;
       }
-      .input-wrapper {
+      .search-input-wrapper {
         flex-direction: column;
       }
-      .input-wrapper button {
-        padding: 0.6rem;
+      .search-input-wrapper button {
+        padding: 0.7rem;
         justify-content: center;
       }
     }
   </style>
 </head>
 <body>
-  <!-- 3D canvas -->
-  <div id="canvas-container"></div>
-
-  <!-- UI overlay -->
-  <div class="ui-overlay">
-    <div class="header">
-      <div class="header-left">
-        <div class="brand">AGRO<span>OSINT</span></div>
-        <div style="font-size: 0.6rem; letter-spacing: 0.3em; color: #666;">EMAIL RECON / v.2.4.1</div>
+  <!-- Main App Layout -->
+  <div class="app-container">
+    <!-- Left: 3D Globe -->
+    <div class="globe-section">
+      <div id="canvas-container"></div>
+      <div class="globe-label">
+        <span class="dot"></span> GLOBAL SURVEILLANCE GRID
       </div>
-      <div class="header-right">
-        <div>
-          <span class="label">NODE</span>
-          <span class="value">ALPHA-7</span>
-        </div>
-        <div>
-          <span class="label">LATENCY</span>
-          <span class="value">12ms</span>
-        </div>
-        <div>
-          <span class="label">STATUS</span>
-          <span class="value" style="color:#4aff8c;">ACTIVE</span>
-        </div>
+      <div class="coords-overlay">
+        <div>LAT <span>37.7749° N</span></div>
+        <div>LON <span>122.4194° W</span></div>
+        <div>ALT <span>45.2 M</span></div>
       </div>
     </div>
 
-    <div class="footer">
-      <div class="status">
-        <span><span class="dot"></span> UPLINK: SECURE</span>
-        <span>ENCRYPTION: AES-256</span>
+    <!-- Right: Search Panel -->
+    <div class="search-section">
+      <div class="top-header">
+        <div class="brand-block">
+          <div class="brand">AGRO<span>OSINT</span></div>
+          <div class="subtitle">MULTI-VECTOR IDENTITY RECON</div>
+        </div>
+        <div class="meta-info">
+          <div>
+            <span class="label">NODE</span>
+            <span class="value">ALPHA-7</span>
+          </div>
+          <div>
+            <span class="label">STATUS</span>
+            <span class="value" style="color:#4aff8c;">ACTIVE</span>
+          </div>
+        </div>
       </div>
-      <div style="color: #3a3a3a;">© 2025 AGRO OSINT // ALL SIGNALS MONITORED</div>
-    </div>
-  </div>
 
-  <!-- Coordinates -->
-  <div class="coords">
-    <div>LAT <span>37.7749° N</span></div>
-    <div>LON <span>122.4194° W</span></div>
-    <div>ALT <span>45.2 M</span></div>
-  </div>
-
-  <!-- ----- EMAIL LOOKUP PANEL ----- -->
-  <div class="email-panel" id="emailPanel">
-    <div class="panel-header">
-      <h2><span class="icon">✉</span> EMAIL RECON</h2>
-      <span class="badge">LIVE SCAN</span>
-    </div>
-
-    <div class="input-group">
-      <label for="emailInput">TARGET EMAIL ADDRESS</label>
-      <div class="input-wrapper">
-        <input type="email" id="emailInput" placeholder="name@example.com" autocomplete="off" spellcheck="false">
-        <button id="scanBtn">
-          <span>SCAN</span>
-          <span style="font-size:0.8rem;">↗</span>
+      <!-- Mode Tabs -->
+      <div class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-mode="email">
+          <span class="tab-icon">✉</span> EMAIL
+        </button>
+        <button class="mode-tab" data-mode="discord">
+          <span class="tab-icon">◈</span> DISCORD ID
+        </button>
+        <button class="mode-tab" data-mode="steam">
+          <span class="tab-icon">◉</span> STEAM ID
+        </button>
+        <button class="mode-tab" data-mode="username">
+          <span class="tab-icon">@</span> USERNAME
+        </button>
+        <button class="mode-tab" data-mode="phone">
+          <span class="tab-icon">☎</span> PHONE
         </button>
       </div>
-    </div>
 
-    <div class="scan-status">
-      <div class="status-text">
-        <span class="dot done" id="statusDot"></span>
-        <span id="statusLabel">READY</span>
+      <!-- Search Input -->
+      <div class="search-area">
+        <label id="inputLabel" for="searchInput">TARGET EMAIL ADDRESS</label>
+        <div class="search-input-wrapper">
+          <input type="text" id="searchInput" placeholder="name@example.com" autocomplete="off" spellcheck="false">
+          <button id="scanBtn">
+            <span>SCAN</span>
+            <span style="font-size:0.85rem;">↗</span>
+          </button>
+        </div>
       </div>
-      <span id="scanCount">0 SOURCES</span>
-    </div>
 
-    <div class="results-container" id="resultsContainer">
-      <div class="empty-state">
-        <div class="icon">◈</div>
-        <div>ENTER AN EMAIL TO BEGIN<br>OSINT SCAN</div>
-        <div style="font-size:0.55rem; color:#444; margin-top:0.3rem;">DARK WEB · PASTE SITES · BREACHES · SOCIAL</div>
+      <!-- Status -->
+      <div class="scan-status">
+        <div class="status-text">
+          <span class="dot done" id="statusDot"></span>
+          <span id="statusLabel">READY</span>
+        </div>
+        <span id="scanCount">0 SOURCES</span>
+      </div>
+
+      <!-- Results -->
+      <div class="results-container" id="resultsContainer">
+        <div class="empty-state">
+          <div class="icon">◈</div>
+          <div>SELECT A VECTOR & ENTER TARGET</div>
+          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">GAMING · SOCIAL · BREACHES · DARK WEB</div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="search-footer">
+        <div class="status-group">
+          <span><span class="dot"></span> UPLINK: SECURE</span>
+          <span>AES-256</span>
+        </div>
+        <div>© 2025 AGRO OSINT</div>
       </div>
     </div>
   </div>
 
-  <!-- Scanlines -->
+  <!-- scanlines -->
   <div class="scanlines"></div>
 
   <!-- Three.js -->
@@ -677,16 +798,18 @@
     import * as THREE from 'three';
     import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
 
-    // --- 3D SCENE (kept exactly as before) ---
+    // =============================================
+    // 3D GLOBE (kept intact)
+    // =============================================
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0a);
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     camera.position.set(0, 1.5, 8);
 
     const container = document.getElementById('canvas-container');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
@@ -704,8 +827,7 @@
     controls.target.set(0, 0, 0);
 
     // lights
-    const ambientLight = new THREE.AmbientLight(0x404060);
-    scene.add(ambientLight);
+    scene.add(new THREE.AmbientLight(0x404060));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
     dirLight.position.set(1, 2, 1);
     scene.add(dirLight);
@@ -724,8 +846,7 @@
       transparent: true,
       opacity: 0.25
     });
-    const wireframeSphere = new THREE.Mesh(sphereGeo, sphereMat);
-    group.add(wireframeSphere);
+    group.add(new THREE.Mesh(sphereGeo, sphereMat));
 
     // particles
     const particleCount = 1800;
@@ -747,64 +868,44 @@
       opacity: 0.5,
       blending: THREE.AdditiveBlending
     });
-    const particles = new THREE.Points(particlesGeo, particlesMat);
-    group.add(particles);
+    group.add(new THREE.Points(particlesGeo, particlesMat));
 
     // rings
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.2, transparent: true });
     const ring1Points = [];
-    const ring1Radius = 2.5;
     for (let i = 0; i <= 64; i++) {
       const angle = (i / 64) * Math.PI * 2;
-      ring1Points.push(new THREE.Vector3(Math.cos(angle) * ring1Radius, 0, Math.sin(angle) * ring1Radius));
+      ring1Points.push(new THREE.Vector3(Math.cos(angle) * 2.5, 0, Math.sin(angle) * 2.5));
     }
-    const ring1Geo = new THREE.BufferGeometry().setFromPoints(ring1Points);
-    const ring1 = new THREE.Line(ring1Geo, ringMaterial);
-    group.add(ring1);
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring1Points), ringMaterial));
 
     const ring2Points = [];
-    const ring2Radius = 2.8;
     for (let i = 0; i <= 64; i++) {
       const angle = (i / 64) * Math.PI * 2;
-      const x = Math.cos(angle) * ring2Radius;
-      const y = Math.sin(angle) * ring2Radius * 0.3;
-      const z = Math.sin(angle) * ring2Radius * 0.8;
+      const x = Math.cos(angle) * 2.8;
+      const y = Math.sin(angle) * 2.8 * 0.3;
+      const z = Math.sin(angle) * 2.8 * 0.8;
       const rotatedY = y * Math.cos(0.8) - z * Math.sin(0.8);
       const rotatedZ = y * Math.sin(0.8) + z * Math.cos(0.8);
       ring2Points.push(new THREE.Vector3(x, rotatedY, rotatedZ));
     }
-    const ring2Geo = new THREE.BufferGeometry().setFromPoints(ring2Points);
-    const ring2 = new THREE.Line(ring2Geo, ringMaterial);
-    group.add(ring2);
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring2Points), ringMaterial));
 
     const ring3Points = [];
-    const ring3Radius = 2.0;
     for (let i = 0; i <= 64; i++) {
       const angle = (i / 64) * Math.PI * 2;
-      const x = Math.cos(angle) * ring3Radius * 0.6;
-      const y = Math.sin(angle) * ring3Radius;
-      const z = Math.cos(angle) * ring3Radius * 0.5;
-      ring3Points.push(new THREE.Vector3(x, y, z));
+      ring3Points.push(new THREE.Vector3(Math.cos(angle) * 1.2, Math.sin(angle) * 2.0, Math.cos(angle) * 1.0));
     }
-    const ring3Geo = new THREE.BufferGeometry().setFromPoints(ring3Points);
-    const ring3 = new THREE.Line(ring3Geo, ringMaterial);
-    group.add(ring3);
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring3Points), ringMaterial));
 
     // dots
-    const dotMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, blending: THREE.AdditiveBlending });
-    const dotPositions = [
-      [2.22, 0, 0], [-2.22, 0, 0], [0, 2.22, 0], [0, -2.22, 0], [0, 0, 2.22], [0, 0, -2.22]
-    ];
+    const dotPositions = [[2.22,0,0],[-2.22,0,0],[0,2.22,0],[0,-2.22,0],[0,0,2.22],[0,0,-2.22]];
     const dotGeo = new THREE.BufferGeometry();
-    const dotArray = new Float32Array(dotPositions.flat());
-    dotGeo.setAttribute('position', new THREE.BufferAttribute(dotArray, 3));
-    const dots = new THREE.Points(dotGeo, dotMaterial);
-    group.add(dots);
+    dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(dotPositions.flat()), 3));
+    group.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, blending: THREE.AdditiveBlending })));
 
     // core
-    const coreGeo = new THREE.SphereGeometry(0.08, 16, 16);
-    const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0x88aaff });
-    const core = new THREE.Mesh(coreGeo, coreMat);
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0x88aaff }));
     group.add(core);
 
     scene.add(group);
@@ -819,14 +920,12 @@
       starPositions[i+2] = (Math.random() - 0.5) * 40;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending });
-    const stars = new THREE.Points(starGeo, starMat);
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending }));
     scene.add(stars);
 
     // animate
     let clock = new THREE.Clock();
     function animate() {
-      const delta = clock.getDelta();
       const elapsedTime = performance.now() * 0.001;
       group.rotation.y += 0.0005;
       group.rotation.x = Math.sin(elapsedTime * 0.1) * 0.05;
@@ -839,75 +938,205 @@
     }
     animate();
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
+    // resize for globe section only
+    function resizeGlobe() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+    }
+    window.addEventListener('resize', resizeGlobe);
+    resizeGlobe();
     renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // =============================================
-    // EMAIL LOOKUP SIMULATION
+    // SEARCH ENGINE
     // =============================================
-    const emailInput = document.getElementById('emailInput');
+    const searchInput = document.getElementById('searchInput');
     const scanBtn = document.getElementById('scanBtn');
     const resultsContainer = document.getElementById('resultsContainer');
     const statusDot = document.getElementById('statusDot');
     const statusLabel = document.getElementById('statusLabel');
     const scanCount = document.getElementById('scanCount');
+    const inputLabel = document.getElementById('inputLabel');
+    const modeTabs = document.querySelectorAll('.mode-tab');
 
-    // Simulated OSINT data sources with realistic-looking results
-    const sources = [
-      { name: 'Pastebin', tag: 'PASTE', weight: 0.7 },
-      { name: 'HaveIBeenPwned', tag: 'BREACH', weight: 0.85 },
-      { name: 'DeHashed', tag: 'LEAK', weight: 0.8 },
-      { name: 'Hunter.io', tag: 'CORP', weight: 0.6 },
-      { name: 'GitHub', tag: 'CODE', weight: 0.5 },
-      { name: 'Twitter/X', tag: 'SOCIAL', weight: 0.65 },
-      { name: 'LinkedIn', tag: 'PROF', weight: 0.55 },
-      { name: 'DarkWeb Index', tag: 'DARK', weight: 0.9 },
-      { name: 'Gravatar', tag: 'AVATAR', weight: 0.4 },
-      { name: 'IntelX', tag: 'INTEL', weight: 0.75 },
-      { name: 'Snusbase', tag: 'DB', weight: 0.8 },
-      { name: 'LeakCheck', tag: 'LEAK', weight: 0.7 },
-      { name: 'EmailRep', tag: 'REP', weight: 0.5 },
-      { name: 'WhatBreach', tag: 'BREACH', weight: 0.6 },
-      { name: 'GhostProject', tag: 'DARK', weight: 0.85 },
-      { name: 'Scylla', tag: 'DB', weight: 0.75 },
-      { name: 'PSBDMP', tag: 'PASTE', weight: 0.65 },
-      { name: 'PasteLert', tag: 'PASTE', weight: 0.6 },
+    let currentMode = 'email';
+
+    // Mode configuration
+    const modes = {
+      email: {
+        label: 'TARGET EMAIL ADDRESS',
+        placeholder: 'name@example.com',
+        icon: '✉',
+        validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+        errorMsg: 'INVALID EMAIL FORMAT.'
+      },
+      discord: {
+        label: 'DISCORD USER ID',
+        placeholder: 'e.g. 123456789012345678',
+        icon: '◈',
+        validate: (v) => /^\d{17,20}$/.test(v),
+        errorMsg: 'DISCORD ID MUST BE 17-20 DIGITS.'
+      },
+      steam: {
+        label: 'STEAM ID / VANITY URL',
+        placeholder: '76561198... or custom URL',
+        icon: '◉',
+        validate: (v) => v.length >= 3,
+        errorMsg: 'ENTER A VALID STEAM ID OR VANITY URL.'
+      },
+      username: {
+        label: 'USERNAME / HANDLE',
+        placeholder: 'e.g. shadow_sniper99',
+        icon: '@',
+        validate: (v) => /^[a-zA-Z0-9_.-]{2,32}$/.test(v),
+        errorMsg: 'USERNAME MUST BE 2-32 CHARS (letters, numbers, _, ., -).'
+      },
+      phone: {
+        label: 'PHONE NUMBER',
+        placeholder: '+1 555 123 4567',
+        icon: '☎',
+        validate: (v) => /^[\d\s+\-()]{7,20}$/.test(v),
+        errorMsg: 'ENTER A VALID PHONE NUMBER.'
+      }
+    };
+
+    // Mode switching
+    modeTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        modeTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentMode = tab.dataset.mode;
+        const cfg = modes[currentMode];
+        inputLabel.textContent = cfg.label;
+        searchInput.placeholder = cfg.placeholder;
+        searchInput.value = '';
+        clearResults();
+        searchInput.focus();
+      });
+    });
+
+    // --- GENERATE GAMING / ACCOUNT RESULTS ---
+
+    const gamesList = [
+      'Counter-Strike 2', 'Valorant', 'League of Legends', 'Dota 2', 'Fortnite',
+      'Apex Legends', 'Call of Duty: Warzone', 'Overwatch 2', 'Rainbow Six Siege',
+      'Rust', 'Escape from Tarkov', 'GTA V', 'Minecraft', 'Roblox', 'PUBG',
+      'Rocket League', 'Destiny 2', 'Warframe', 'Path of Exile', 'World of Warcraft',
+      'Final Fantasy XIV', 'Elder Scrolls Online', 'Sea of Thieves', 'Deep Rock Galactic',
+      'Phasmophobia', 'Dead by Daylight', 'Among Us', 'Fall Guys', 'Rocket League'
     ];
 
-    // Generate realistic-looking result data
-    function generateResult(email, source) {
-      const templates = [
-        () => `<span class="highlight">${email}</span> found in <span class="highlight">${Math.floor(Math.random() * 5 + 1)}</span> database records`,
-        () => `Credentials leaked: <span class="highlight">${Math.random().toString(36).substring(2, 10)}</span> (hashed)`,
-        () => `Associated with <span class="highlight">${['John', 'Jane', 'Alex', 'Sam', 'Chris', 'Jordan', 'Taylor', 'Morgan'][Math.floor(Math.random() * 8)]} ${['Smith', 'Doe', 'Johnson', 'Brown', 'Lee', 'Garcia', 'Miller', 'Davis'][Math.floor(Math.random() * 8)]}</span>`,
-        () => `IP: <span class="highlight">${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}</span>`,
-        () => `Registered on <span class="highlight">${['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'TikTok', 'Reddit'][Math.floor(Math.random() * 6)]}</span>`,
-        () => `Last seen: <span class="highlight">${new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString()}</span>`,
-        () => `Password hint: <span class="highlight">${['petname', 'birthyear', 'city', 'hobby', 'sports', 'music'][Math.floor(Math.random() * 6)]}${Math.floor(Math.random() * 100)}</span>`,
-        () => `Found in <span class="highlight">${['Collection #1', 'AntiPublic', 'Exploit.in', 'LinkedIn Scrape', 'MySpace', 'Adobe', 'Dropbox', 'Tumblr'][Math.floor(Math.random() * 8)]}</span> breach`,
-        () => `Gravatar hash: <span class="highlight">${Math.random().toString(36).substring(2, 15)}</span>`,
-        () => `Domain reputation: <span class="highlight">${['TRUSTED', 'NEUTRAL', 'SUSPICIOUS', 'MALICIOUS'][Math.floor(Math.random() * 4)]}</span>`,
-      ];
-      const template = templates[Math.floor(Math.random() * templates.length)];
-      const confidence = Math.floor(Math.random() * 30 + 70); // 70-99
-      const date = new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toLocaleDateString();
-      
+    const gamingSources = [
+      { name: 'SteamDB', tag: 'STEAM', tagClass: 'steam' },
+      { name: 'Steam Community', tag: 'STEAM', tagClass: 'steam' },
+      { name: 'SteamRep', tag: 'STEAM', tagClass: 'steam' },
+      { name: 'Discord ID Lookup', tag: 'DISCORD', tagClass: 'discord' },
+      { name: 'Discord Bots DB', tag: 'DISCORD', tagClass: 'discord' },
+      { name: 'Disboard', tag: 'DISCORD', tagClass: 'discord' },
+      { name: 'Top.gg', tag: 'DISCORD', tagClass: 'discord' },
+      { name: 'Riot Games API', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'Faceit Finder', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'Tracker.gg', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'OP.GG', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'Leetify', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'SteamID.uk', tag: 'STEAM', tagClass: 'steam' },
+      { name: 'XboxGamertag', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'PSNProfiles', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'Nintendo ID DB', tag: 'GAMING', tagClass: 'gaming' },
+      { name: 'HaveIBeenPwned', tag: 'BREACH', tagClass: 'breach' },
+      { name: 'DeHashed', tag: 'LEAK', tagClass: 'breach' },
+      { name: 'IntelX', tag: 'INTEL', tagClass: 'breach' },
+      { name: 'Snusbase', tag: 'DB', tagClass: 'breach' },
+      { name: 'LeakCheck', tag: 'LEAK', tagClass: 'breach' },
+      { name: 'Twitter/X', tag: 'SOCIAL', tagClass: 'social' },
+      { name: 'GitHub', tag: 'CODE', tagClass: 'social' },
+      { name: 'Reddit', tag: 'SOCIAL', tagClass: 'social' },
+      { name: 'YouTube', tag: 'SOCIAL', tagClass: 'social' },
+      { name: 'Twitch', tag: 'SOCIAL', tagClass: 'social' },
+      { name: 'TikTok', tag: 'SOCIAL', tagClass: 'social' },
+      { name: 'Instagram', tag: 'SOCIAL', tagClass: 'social' },
+      { name: 'DarkWeb Index', tag: 'DARK', tagClass: 'dark' },
+      { name: 'GhostProject', tag: 'DARK', tagClass: 'dark' },
+      { name: 'PSBDMP', tag: 'PASTE', tagClass: 'social' },
+      { name: 'Pastebin', tag: 'PASTE', tagClass: 'social' },
+    ];
+
+    function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function generateGamingResult(target, source) {
+      const game1 = randomFrom(gamesList);
+      const game2 = randomFrom(gamesList);
+      const hours = Math.floor(Math.random() * 4000) + 20;
+      const rank = randomFrom(['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Grandmaster', 'Immortal', 'Radiant', 'Elite', 'Legendary']);
+      const region = randomFrom(['NA', 'EU', 'ASIA', 'SA', 'OCE', 'ME']);
+      const kd = (Math.random() * 3 + 0.3).toFixed(2);
+      const winrate = Math.floor(Math.random() * 40 + 40);
+      const friends = Math.floor(Math.random() * 500);
+      const vac = Math.random() > 0.85;
+      const level = Math.floor(Math.random() * 500) + 1;
+      const joinYear = Math.floor(Math.random() * 15) + 2008;
+
+      // Build result text based on source category
+      let text = '';
+      const t = target.toLowerCase();
+
+      const templates = {
+        steam: [
+          `Steam profile linked: <span class="highlight">steamcommunity.com/id/${t.replace(/[^a-z0-9]/g, '')}</span>`,
+          `Owns <span class="highlight">${Math.floor(Math.random()*300)+10}</span> games · <span class="highlight">${hours}h</span> on record`,
+          `VAC status: <span class="highlight" style="color:${vac ? '#ff6b6b' : '#8aff8a'}">${vac ? 'BANNED' : 'CLEAN'}</span> · Level ${level}`,
+          `Last online: <span class="highlight">${new Date(Date.now() - Math.random()*30*24*60*60*1000).toLocaleDateString()}</span>`,
+          `Friends: <span class="highlight">${friends}</span> · Member since <span class="highlight">${joinYear}</span>`,
+        ],
+        discord: [
+          `Discord ID: <span class="highlight">${Math.floor(Math.random()*900000000000000000)+100000000000000000}</span>`,
+          `Registered: <span class="highlight">${new Date(Date.now() - Math.random()*5*365*24*60*60*1000).toLocaleDateString()}</span>`,
+          `Servers: <span class="highlight">${Math.floor(Math.random()*50)+3}</span> · Nickname history: <span class="highlight">${Math.random().toString(36).substring(2,8)}</span>`,
+          `Connected accounts: <span class="highlight">${randomFrom(['Steam','Twitch','YouTube','Spotify','GitHub','Xbox','PlayStation'])}</span>`,
+          `Badges: <span class="highlight">${randomFrom(['Early Supporter','Nitro','HypeSquad','Bug Hunter','Verified Bot'])}</span>`,
+        ],
+        gaming: [
+          `<span class="game-tag">${game1}</span> — Rank: <span class="highlight">${rank}</span> · K/D: <span class="highlight">${kd}</span> · Winrate: <span class="highlight">${winrate}%</span>`,
+          `<span class="game-tag">${game2}</span> — <span class="highlight">${hours}h</span> played · Region <span class="highlight">${region}</span>`,
+          `Linked game accounts: <span class="highlight">${randomFrom(['Steam','Xbox','PSN','Epic','Battle.net','Riot'])}</span> · <span class="highlight">${randomFrom(['Steam','Xbox','PSN','Epic','Battle.net','Riot'])}</span>`,
+          `Tournament history: <span class="highlight">${Math.floor(Math.random()*20)}</span> events · Team: <span class="highlight">${randomFrom(['Sentinels','FaZe','G2','TSM','C9','Fnatic','NAVI','Liquid'])}</span>`,
+        ],
+        breach: [
+          `Found in <span class="highlight">${randomFrom(['Collection #1','AntiPublic','Exploit.in','Deezer','MyFitnessPal','Adobe','Dropbox','Zynga','Steam'])}</span> breach`,
+          `Credentials: <span class="highlight">${t.substring(0,4)}${'*'.repeat(Math.min(t.length,6))}</span> (hashed) · Passwords reused: <span class="highlight">${Math.floor(Math.random()*8)+1}</span>`,
+          `Records: <span class="highlight">${Math.floor(Math.random()*50)+1}</span> · Confidence: <span class="highlight">${Math.floor(Math.random()*30)+70}%</span>`,
+        ],
+        social: [
+          `Profile: <span class="highlight">@${t.replace(/[^a-z0-9_.]/g,'')}</span> · Followers: <span class="highlight">${Math.floor(Math.random()*50000)}</span>`,
+          `Bio: "<span class="highlight">${randomFrom(['gamer','streamer','content creator','esports','just here for the memes','GG'])}</span>"`,
+          `Last post: <span class="highlight">${new Date(Date.now() - Math.random()*60*24*60*60*1000).toLocaleDateString()}</span>`,
+        ],
+        dark: [
+          `Dark web mention: <span class="highlight">${Math.floor(Math.random()*100)} results</span>`,
+          `Leaked database: <span class="highlight">${randomFrom(['Combolist','Stealer Logs','Session Tokens','Discord Tokens'])}</span>`,
+          `Risk score: <span class="highlight" style="color:#ff6b6b">HIGH</span> · Threat level: <span class="highlight">${Math.floor(Math.random()*10)}</span>/10`,
+        ]
+      };
+
+      const pool = templates[source.tagClass] || templates.gaming;
+      text = randomFrom(pool);
+
       return {
         source: source.name,
         tag: source.tag,
-        text: template(),
-        confidence,
-        date,
-        weight: source.weight
+        tagClass: source.tagClass,
+        text: text,
+        confidence: Math.floor(Math.random() * 30) + 70,
+        date: new Date(Date.now() - Math.random() * 730 * 24 * 60 * 60 * 1000).toLocaleDateString()
       };
     }
 
-    // Update UI state
+    // UI helpers
     function setStatus(state, label) {
       statusDot.className = 'dot ' + state;
       statusLabel.textContent = label;
@@ -917,75 +1146,84 @@
       scanCount.textContent = count + ' SOURCES';
     }
 
-    // Clear results
     function clearResults() {
-      resultsContainer.innerHTML = '';
+      resultsContainer.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">◈</div>
+          <div>SELECT A VECTOR & ENTER TARGET</div>
+          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">GAMING · SOCIAL · BREACHES · DARK WEB</div>
+        </div>
+      `;
       setScanCount(0);
       setStatus('done', 'READY');
     }
 
-    // Show empty state
-    function showEmptyState() {
-      resultsContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">◈</div>
-          <div>ENTER AN EMAIL TO BEGIN<br>OSINT SCAN</div>
-          <div style="font-size:0.55rem; color:#444; margin-top:0.3rem;">DARK WEB · PASTE SITES · BREACHES · SOCIAL</div>
-        </div>
-      `;
-    }
-
-    // Show error
     function showError(msg) {
-      const errDiv = document.createElement('div');
-      errDiv.className = 'error-message';
-      errDiv.textContent = msg;
-      resultsContainer.innerHTML = '';
-      resultsContainer.appendChild(errDiv);
+      resultsContainer.innerHTML = `<div class="error-message">${msg}</div>`;
       setScanCount(0);
       setStatus('error', 'ERROR');
     }
 
-    // Simulate scanning with progressive results
-    async function performScan(email) {
-      // Validate email
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        showError('INVALID EMAIL FORMAT. PLEASE ENTER A VALID ADDRESS.');
+    // Main scan
+    async function performScan(target) {
+      const cfg = modes[currentMode];
+      if (!cfg.validate(target)) {
+        showError(cfg.errorMsg);
         return;
       }
 
-      // Disable button during scan
+      // Update button
       scanBtn.disabled = true;
-      scanBtn.innerHTML = '<span class="spinner"></span> SCANNING...';
+      scanBtn.innerHTML = '<span class="spinner"></span> SCAN';
       setStatus('scanning', 'SCANNING');
       resultsContainer.innerHTML = '';
       setScanCount(0);
 
-      // Simulate progressive discovery
-      const foundResults = [];
-      const totalSources = sources.length;
-      const scanDuration = 3500 + Math.random() * 1500; // 3.5-5 seconds
-      const stepTime = scanDuration / totalSources;
+      // Pick relevant sources for mode
+      let activeSources;
+      if (currentMode === 'email') {
+        activeSources = gamingSources;
+      } else if (currentMode === 'discord') {
+        activeSources = gamingSources.filter(s => 
+          ['discord', 'gaming', 'breach', 'social', 'dark'].includes(s.tagClass)
+        );
+      } else if (currentMode === 'steam') {
+        activeSources = gamingSources.filter(s => 
+          ['steam', 'gaming', 'breach', 'social'].includes(s.tagClass)
+        );
+      } else if (currentMode === 'username') {
+        activeSources = gamingSources.filter(s => 
+          ['social', 'gaming', 'discord', 'steam', 'breach'].includes(s.tagClass)
+        );
+      } else {
+        activeSources = gamingSources;
+      }
 
-      // Shuffle sources for randomness
-      const shuffled = [...sources].sort(() => Math.random() - 0.5);
+      // Shuffle and limit
+      const shuffled = [...activeSources].sort(() => Math.random() - 0.5);
+      const foundResults = [];
+      const total = shuffled.length;
+      const scanDuration = 3000 + Math.random() * 2000;
+      const stepTime = scanDuration / total;
 
       for (let i = 0; i < shuffled.length; i++) {
         const source = shuffled[i];
-        // Simulate finding data based on source weight
-        const found = Math.random() < source.weight;
-        
-        if (found) {
-          const result = generateResult(email, source);
+        // Higher hit chance for gaming/discord/steam modes
+        let hitChance = 0.65;
+        if (currentMode === 'discord' && source.tagClass === 'discord') hitChance = 0.95;
+        if (currentMode === 'steam' && source.tagClass === 'steam') hitChance = 0.95;
+        if (currentMode === 'username' && source.tagClass === 'social') hitChance = 0.85;
+        if (currentMode === 'email' && source.tagClass === 'breach') hitChance = 0.75;
+
+        if (Math.random() < hitChance) {
+          const result = generateGamingResult(target, source);
           foundResults.push(result);
-          
-          // Add result to UI
-          const resultEl = document.createElement('div');
-          resultEl.className = 'result-item';
-          resultEl.innerHTML = `
+
+          const el = document.createElement('div');
+          el.className = 'result-item';
+          el.innerHTML = `
             <div class="source">
-              <span class="tag">${result.tag}</span>
+              <span class="tag ${result.tagClass}">${result.tag}</span>
               <span>${result.source}</span>
             </div>
             <div class="data">${result.text}</div>
@@ -994,59 +1232,53 @@
               <span>${result.date}</span>
             </div>
           `;
-          resultsContainer.appendChild(resultEl);
+          resultsContainer.appendChild(el);
           resultsContainer.scrollTop = resultsContainer.scrollHeight;
-          
           setScanCount(foundResults.length);
         }
 
-        // Update progress
-        const progress = Math.floor(((i + 1) / totalSources) * 100);
+        const progress = Math.floor(((i + 1) / total) * 100);
         statusLabel.textContent = `SCANNING ${progress}%`;
-        
-        // Wait for step
-        await new Promise(resolve => setTimeout(resolve, stepTime));
+        await new Promise(r => setTimeout(r, stepTime));
       }
 
-      // Scan complete
       if (foundResults.length === 0) {
         resultsContainer.innerHTML = `
           <div class="empty-state">
             <div class="icon">✓</div>
             <div>NO RESULTS FOUND</div>
-            <div style="font-size:0.55rem; color:#444; margin-top:0.3rem;">EMAIL APPEARS CLEAN IN SCANNED SOURCES</div>
+            <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">TARGET APPEARS CLEAN IN SCANNED SOURCES</div>
           </div>
         `;
         setStatus('done', 'CLEAN');
       } else {
         setStatus('done', 'COMPLETE');
       }
-      
+
       setScanCount(foundResults.length);
       scanBtn.disabled = false;
-      scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.8rem;">↗</span>';
+      scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.85rem;">↗</span>';
     }
 
-    // Event listeners
+    // Events
     scanBtn.addEventListener('click', () => {
-      const email = emailInput.value.trim();
-      if (!email) {
-        showError('PLEASE ENTER AN EMAIL ADDRESS TO SCAN.');
+      const v = searchInput.value.trim();
+      if (!v) {
+        showError('PLEASE ENTER A TARGET VALUE.');
         return;
       }
-      performScan(email);
+      performScan(v);
     });
 
-    emailInput.addEventListener('keydown', (e) => {
+    searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         scanBtn.click();
       }
     });
 
-    // Focus input on load
     window.addEventListener('load', () => {
-      setTimeout(() => emailInput.focus(), 500);
+      setTimeout(() => searchInput.focus(), 500);
     });
 
   </script>
