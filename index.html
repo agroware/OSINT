@@ -4,706 +4,239 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AGRO OSINT // MULTI-VECTOR RECON</title>
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
-    /* reset & base */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background-color: #0a0a0a;
-      color: #e0e0e0;
+      background-color: #0a0a0a; color: #e0e0e0;
       font-family: 'Space Grotesk', sans-serif;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      position: relative;
+      overflow: hidden; height: 100vh; width: 100vw; position: relative;
     }
-
-    /* subtle white accents and texture */
     body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-image: 
-        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.02) 0%, transparent 30%),
-        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 40%),
-        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.01) 0px, rgba(255, 255, 255, 0.01) 1px, transparent 1px, transparent 8px);
-      pointer-events: none;
-      z-index: 0;
+      content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.02) 0%, transparent 30%),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,0.02) 0%, transparent 40%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 8px);
+      pointer-events: none; z-index: 0;
     }
-
-    /* ----- MAIN LAYOUT ----- */
     .app-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      z-index: 5;
-      pointer-events: none;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; z-index: 5; pointer-events: none;
     }
-
-    /* Left side - 3D Globe */
-    .globe-section {
-      flex: 1;
-      position: relative;
-      pointer-events: auto;
-      min-width: 0;
-    }
-
+    .globe-section { flex: 1; position: relative; pointer-events: auto; min-width: 0; }
     #canvas-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      cursor: grab;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1; cursor: grab;
     }
-
-    #canvas-container:active {
-      cursor: grabbing;
-    }
-
-    /* Right side - Search Panel */
+    #canvas-container:active { cursor: grabbing; }
     .search-section {
-      width: 580px;
-      max-width: 55vw;
-      height: 100%;
-      position: relative;
-      pointer-events: auto;
-      display: flex;
-      flex-direction: column;
-      z-index: 50;
+      width: 580px; max-width: 55vw; height: 100%; position: relative;
+      pointer-events: auto; display: flex; flex-direction: column; z-index: 50;
       padding: 2rem 2rem 2rem 0;
-      background: linear-gradient(90deg, transparent 0%, rgba(10, 10, 10, 0.6) 15%, rgba(10, 10, 10, 0.95) 100%);
+      background: linear-gradient(90deg, transparent 0%, rgba(10,10,10,0.6) 15%, rgba(10,10,10,0.95) 100%);
       overflow: hidden;
     }
-
-    /* Header inside search section */
     .top-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      width: 100%;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      margin-bottom: 1.2rem;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      width: 100%; padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 1.2rem;
     }
-
-    .top-header .brand-block {
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-
+    .top-header .brand-block { display: flex; flex-direction: column; gap: 0.3rem; }
     .top-header .brand {
-      font-size: 1.8rem;
-      font-weight: 600;
-      letter-spacing: 0.35em;
-      line-height: 1;
-      color: #ffffff;
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-      text-transform: uppercase;
+      font-size: 1.8rem; font-weight: 600; letter-spacing: 0.35em; line-height: 1;
+      color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.3); text-transform: uppercase;
     }
-
-    .top-header .brand span {
-      color: #b0b0b0;
-      font-weight: 300;
-      font-size: 1rem;
-      letter-spacing: 0.2em;
-      margin-left: 0.4rem;
-    }
-
-    .top-header .subtitle {
-      font-size: 0.55rem;
-      letter-spacing: 0.3em;
-      color: #666;
-      font-family: 'JetBrains Mono', monospace;
-      text-transform: uppercase;
-    }
-
-    .top-header .meta-info {
-      display: flex;
-      gap: 1.5rem;
-      font-size: 0.6rem;
-      color: #888;
-      font-family: 'JetBrains Mono', monospace;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-
-    .top-header .meta-info div {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-    }
-
-    .top-header .meta-info .label {
-      color: #555;
-      font-size: 0.5rem;
-      margin-bottom: 0.15rem;
-    }
-
-    .top-header .meta-info .value {
-      color: #ddd;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-      padding-bottom: 0.1rem;
-    }
-
-    /* Search Mode Tabs */
-    .mode-tabs {
-      display: flex;
-      gap: 0.3rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-
+    .top-header .brand span { color: #b0b0b0; font-weight: 300; font-size: 1rem; letter-spacing: 0.2em; margin-left: 0.4rem; }
+    .top-header .subtitle { font-size: 0.55rem; letter-spacing: 0.3em; color: #666; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+    .top-header .meta-info { display: flex; gap: 1.5rem; font-size: 0.6rem; color: #888; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.1em; }
+    .top-header .meta-info div { display: flex; flex-direction: column; align-items: flex-end; }
+    .top-header .meta-info .label { color: #555; font-size: 0.5rem; margin-bottom: 0.15rem; }
+    .top-header .meta-info .value { color: #ddd; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 0.1rem; }
+    .mode-tabs { display: flex; gap: 0.3rem; margin-bottom: 1rem; flex-wrap: wrap; }
     .mode-tab {
-      background: rgba(20, 20, 20, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #888;
-      padding: 0.5rem 0.8rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      white-space: nowrap;
+      background: rgba(20,20,20,0.8); border: 1px solid rgba(255,255,255,0.1);
+      color: #888; padding: 0.5rem 0.8rem; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; border-radius: 2px; transition: all 0.2s;
+      display: flex; align-items: center; gap: 0.35rem; white-space: nowrap;
     }
-
-    .mode-tab .tab-icon {
-      font-size: 0.85rem;
-      opacity: 0.7;
-    }
-
-    .mode-tab:hover {
-      background: rgba(40, 40, 40, 0.9);
-      border-color: rgba(255, 255, 255, 0.25);
-      color: #ccc;
-    }
-
-    .mode-tab.active {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.5);
-      color: #fff;
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-    }
-
-    .mode-tab.active .tab-icon {
-      opacity: 1;
-    }
-
-    /* Search Input Area */
-    .search-area {
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
-      margin-bottom: 1rem;
-    }
-
-    .search-area label {
-      font-size: 0.6rem;
-      letter-spacing: 0.15em;
-      color: #777;
-      text-transform: uppercase;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    .search-input-wrapper {
-      display: flex;
-      gap: 0.5rem;
-    }
-
+    .mode-tab .tab-icon { font-size: 0.85rem; opacity: 0.7; }
+    .mode-tab:hover { background: rgba(40,40,40,0.9); border-color: rgba(255,255,255,0.25); color: #ccc; }
+    .mode-tab.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.5); color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.1); }
+    .mode-tab.active .tab-icon { opacity: 1; }
+    .search-area { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1rem; }
+    .search-area label { font-size: 0.6rem; letter-spacing: 0.15em; color: #777; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+    .search-input-wrapper { display: flex; gap: 0.5rem; }
     .search-input-wrapper input {
-      flex: 1;
-      background: rgba(15, 15, 15, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #fff;
-      padding: 0.8rem 0.9rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.8rem;
-      outline: none;
-      border-radius: 2px;
-      transition: border-color 0.2s, background 0.2s;
+      flex: 1; background: rgba(15,15,15,0.9); border: 1px solid rgba(255,255,255,0.15);
+      color: #fff; padding: 0.8rem 0.9rem; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem; outline: none; border-radius: 2px; transition: border-color 0.2s, background 0.2s;
       letter-spacing: 0.02em;
     }
-
-    .search-input-wrapper input:focus {
-      border-color: rgba(255, 255, 255, 0.5);
-      background: rgba(25, 25, 25, 0.95);
-    }
-
-    .search-input-wrapper input::placeholder {
-      color: #4a4a4a;
-      font-size: 0.75rem;
-    }
-
+    .search-input-wrapper input:focus { border-color: rgba(255,255,255,0.5); background: rgba(25,25,25,0.95); }
+    .search-input-wrapper input::placeholder { color: #4a4a4a; font-size: 0.75rem; }
     .search-input-wrapper button {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      padding: 0 1.3rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      white-space: nowrap;
-      text-transform: uppercase;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; padding: 0 1.3rem; font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 0.1em; cursor: pointer;
+      border-radius: 2px; transition: all 0.2s; display: flex; align-items: center;
+      gap: 0.4rem; white-space: nowrap; text-transform: uppercase;
     }
-
-    .search-input-wrapper button:hover {
-      background: rgba(255, 255, 255, 0.2);
-      border-color: rgba(255, 255, 255, 0.5);
-    }
-
-    .search-input-wrapper button:active {
-      background: rgba(255, 255, 255, 0.3);
-      transform: scale(0.97);
-    }
-
-    .search-input-wrapper button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* Scan Status Bar */
+    .search-input-wrapper button:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
+    .search-input-wrapper button:active { background: rgba(255,255,255,0.3); transform: scale(0.97); }
+    .search-input-wrapper button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .scan-status {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.6rem;
-      color: #777;
-      padding: 0.4rem 0;
-      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
-      border-top: 1px dashed rgba(255, 255, 255, 0.08);
-      margin-bottom: 0.8rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.6rem; color: #777; padding: 0.4rem 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.08);
+      border-top: 1px dashed rgba(255,255,255,0.08);
+      margin-bottom: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
       font-family: 'JetBrains Mono', monospace;
     }
-
-    .scan-status .status-text {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
+    .scan-status .status-text { display: flex; align-items: center; gap: 0.4rem; }
     .scan-status .status-text .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #4aff8c;
-      box-shadow: 0 0 6px #4aff8c;
-      animation: pulse 2s infinite;
+      width: 5px; height: 5px; border-radius: 50%; background: #4aff8c;
+      box-shadow: 0 0 6px #4aff8c; animation: pulse 2s infinite;
     }
-
-    .scan-status .status-text .dot.scanning {
-      background: #ffaa33;
-      box-shadow: 0 0 6px #ffaa33;
-      animation: pulse 1s infinite;
-    }
-
-    .scan-status .status-text .dot.error {
-      background: #ff4a4a;
-      box-shadow: 0 0 6px #ff4a4a;
-      animation: none;
-    }
-
-    .scan-status .status-text .dot.done {
-      background: #4aff8c;
-      box-shadow: 0 0 6px #4aff8c;
-      animation: none;
-    }
-
+    .scan-status .status-text .dot.scanning { background: #ffaa33; box-shadow: 0 0 6px #ffaa33; animation: pulse 1s infinite; }
+    .scan-status .status-text .dot.error { background: #ff4a4a; box-shadow: 0 0 6px #ff4a4a; animation: none; }
+    .scan-status .status-text .dot.done { background: #4aff8c; box-shadow: 0 0 6px #4aff8c; animation: none; }
     @keyframes pulse {
       0% { opacity: 0.6; box-shadow: 0 0 4px currentColor; }
       50% { opacity: 1; box-shadow: 0 0 12px currentColor; }
       100% { opacity: 0.6; box-shadow: 0 0 4px currentColor; }
     }
-
-    /* Results Container */
     .results-container {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      padding-right: 0.4rem;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-      min-height: 0;
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+      gap: 0.6rem; padding-right: 0.4rem; scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent; min-height: 0;
     }
-
-    .results-container::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .results-container::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .results-container::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
+    .results-container::-webkit-scrollbar { width: 4px; }
+    .results-container::-webkit-scrollbar-track { background: transparent; }
+    .results-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
     .result-item {
-      background: rgba(255, 255, 255, 0.03);
-      border-left: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 0.7rem 0.9rem;
-      border-radius: 1px;
-      font-size: 0.7rem;
-      line-height: 1.55;
-      transition: background 0.2s, border-color 0.2s;
-      animation: fadeIn 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
+      background: rgba(255,255,255,0.03); border-left: 2px solid rgba(255,255,255,0.2);
+      padding: 0.7rem 0.9rem; border-radius: 1px; font-size: 0.7rem;
+      line-height: 1.55; transition: background 0.2s, border-color 0.2s;
+      animation: fadeIn 0.3s ease; display: flex; flex-direction: column; gap: 0.3rem;
     }
-
-    .result-item:hover {
-      background: rgba(255, 255, 255, 0.07);
-      border-left-color: rgba(255, 255, 255, 0.6);
-    }
-
+    .result-item:hover { background: rgba(255,255,255,0.07); border-left-color: rgba(255,255,255,0.6); }
     .result-item .source {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #aaa;
-      font-size: 0.6rem;
-      letter-spacing: 0.05em;
-      font-family: 'JetBrains Mono', monospace;
+      display: flex; align-items: center; gap: 0.5rem; color: #aaa;
+      font-size: 0.6rem; letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace;
       flex-wrap: wrap;
     }
-
     .result-item .source .tag {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 0.15rem 0.5rem;
-      border-radius: 1px;
-      font-size: 0.55rem;
-      color: #ccc;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      text-transform: uppercase;
+      background: rgba(255,255,255,0.1); padding: 0.15rem 0.5rem;
+      border-radius: 1px; font-size: 0.55rem; color: #ccc;
+      border: 1px solid rgba(255,255,255,0.08); text-transform: uppercase;
       letter-spacing: 0.08em;
     }
-
-    .result-item .source .tag.gaming {
-      background: rgba(100, 150, 255, 0.15);
-      border-color: rgba(100, 150, 255, 0.3);
-      color: #8ab4ff;
-    }
-
-    .result-item .source .tag.discord {
-      background: rgba(88, 101, 242, 0.15);
-      border-color: rgba(88, 101, 242, 0.4);
-      color: #7289da;
-    }
-
-    .result-item .source .tag.steam {
-      background: rgba(23, 105, 170, 0.15);
-      border-color: rgba(23, 105, 170, 0.4);
-      color: #66c0f4;
-    }
-
-    .result-item .source .tag.social {
-      background: rgba(255, 100, 100, 0.12);
-      border-color: rgba(255, 100, 100, 0.3);
-      color: #ff8a8a;
-    }
-
-    .result-item .source .tag.breach {
-      background: rgba(255, 60, 60, 0.15);
-      border-color: rgba(255, 60, 60, 0.4);
-      color: #ff6b6b;
-    }
-
-    .result-item .source .tag.dark {
-      background: rgba(180, 60, 255, 0.12);
-      border-color: rgba(180, 60, 255, 0.3);
-      color: #c48aff;
-    }
-
-    .result-item .data {
-      color: #e0e0e0;
-      font-weight: 400;
-      word-break: break-word;
-    }
-
-    .result-item .data .highlight {
-      color: #fff;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 0 0.2rem;
-      border-radius: 1px;
-    }
-
+    .result-item .source .tag.gaming { background: rgba(100,150,255,0.15); border-color: rgba(100,150,255,0.3); color: #8ab4ff; }
+    .result-item .source .tag.discord { background: rgba(88,101,242,0.15); border-color: rgba(88,101,242,0.4); color: #7289da; }
+    .result-item .source .tag.steam { background: rgba(23,105,170,0.15); border-color: rgba(23,105,170,0.4); color: #66c0f4; }
+    .result-item .source .tag.social { background: rgba(255,100,100,0.12); border-color: rgba(255,100,100,0.3); color: #ff8a8a; }
+    .result-item .source .tag.breach { background: rgba(255,60,60,0.15); border-color: rgba(255,60,60,0.4); color: #ff6b6b; }
+    .result-item .source .tag.dark { background: rgba(180,60,255,0.12); border-color: rgba(180,60,255,0.3); color: #c48aff; }
+    .result-item .data { color: #e0e0e0; font-weight: 400; word-break: break-word; }
+    .result-item .data .highlight { color: #fff; background: rgba(255,255,255,0.1); padding: 0 0.2rem; border-radius: 1px; }
     .result-item .data .game-tag {
-      display: inline-block;
-      background: rgba(100, 200, 100, 0.12);
-      border: 1px solid rgba(100, 200, 100, 0.25);
-      color: #8aff8a;
-      padding: 0 0.3rem;
-      border-radius: 1px;
-      font-size: 0.6rem;
-      margin: 0 0.1rem;
+      display: inline-block; background: rgba(100,200,100,0.12);
+      border: 1px solid rgba(100,200,100,0.25); color: #8aff8a;
+      padding: 0 0.3rem; border-radius: 1px; font-size: 0.6rem; margin: 0 0.1rem;
     }
-
     .result-item .meta {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.55rem;
-      color: #555;
-      margin-top: 0.1rem;
-      font-family: 'JetBrains Mono', monospace;
+      display: flex; justify-content: space-between; font-size: 0.55rem;
+      color: #555; margin-top: 0.1rem; font-family: 'JetBrains Mono', monospace;
       letter-spacing: 0.05em;
     }
-
     .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 2.5rem 0.5rem;
-      color: #555;
-      font-size: 0.65rem;
-      text-align: center;
-      gap: 0.6rem;
-      letter-spacing: 0.05em;
-      font-family: 'JetBrains Mono', monospace;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 2.5rem 0.5rem; color: #555;
+      font-size: 0.65rem; text-align: center; gap: 0.6rem;
+      letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace;
     }
-
-    .empty-state .icon {
-      font-size: 2rem;
-      opacity: 0.25;
-    }
-
-    /* Loading spinner */
+    .empty-state .icon { font-size: 2rem; opacity: 0.25; }
     .spinner {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 1.5px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      display: inline-block; width: 12px; height: 12px;
+      border: 1.5px solid rgba(255,255,255,0.2); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
     .error-message {
-      background: rgba(255, 80, 80, 0.1);
-      border-left: 2px solid #ff4a4a;
-      color: #ff8a8a;
-      padding: 0.6rem 0.9rem;
-      font-size: 0.65rem;
-      border-radius: 1px;
-      animation: fadeIn 0.2s ease;
+      background: rgba(255,80,80,0.1); border-left: 2px solid #ff4a4a;
+      color: #ff8a8a; padding: 0.6rem 0.9rem; font-size: 0.65rem;
+      border-radius: 1px; animation: fadeIn 0.2s ease;
       font-family: 'JetBrains Mono', monospace;
     }
-
-    /* Footer */
     .search-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 0.8rem;
-      margin-top: 0.5rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.55rem;
-      color: #444;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 0.8rem; margin-top: 0.5rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
+      color: #444; letter-spacing: 0.1em; text-transform: uppercase;
     }
-
-    .search-footer .status-group {
-      display: flex;
-      gap: 1.2rem;
-      align-items: center;
-    }
-
-    .search-footer .status-group span {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
+    .search-footer .status-group { display: flex; gap: 1.2rem; align-items: center; }
+    .search-footer .status-group span { display: flex; align-items: center; gap: 0.35rem; }
     .search-footer .status-group .dot {
-      display: inline-block;
-      width: 5px;
-      height: 5px;
-      background-color: #4aff8c;
-      border-radius: 50%;
-      box-shadow: 0 0 6px #4aff8c;
-      animation: pulse 2s infinite;
+      display: inline-block; width: 5px; height: 5px;
+      background-color: #4aff8c; border-radius: 50%;
+      box-shadow: 0 0 6px #4aff8c; animation: pulse 2s infinite;
     }
-
-    /* Coordinates overlay on globe */
     .coords-overlay {
-      position: absolute;
-      bottom: 1.5rem;
-      left: 1.5rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem;
-      color: #4a4a4a;
-      line-height: 1.7;
-      letter-spacing: 0.1em;
-      z-index: 15;
-      pointer-events: none;
-      text-transform: uppercase;
+      position: absolute; bottom: 1.5rem; left: 1.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+      color: #4a4a4a; line-height: 1.7; letter-spacing: 0.1em;
+      z-index: 15; pointer-events: none; text-transform: uppercase;
     }
-
-    .coords-overlay span {
-      color: #8a8a8a;
-    }
-
-    /* Globe label */
+    .coords-overlay span { color: #8a8a8a; }
     .globe-label {
-      position: absolute;
-      top: 1.5rem;
-      left: 1.5rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem;
-      color: #555;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      z-index: 15;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      position: absolute; top: 1.5rem; left: 1.5rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+      color: #555; letter-spacing: 0.2em; text-transform: uppercase;
+      z-index: 15; pointer-events: none; display: flex;
+      align-items: center; gap: 0.5rem;
     }
-
     .globe-label .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: #4aff8c;
-      box-shadow: 0 0 8px #4aff8c;
+      width: 5px; height: 5px; border-radius: 50%;
+      background: #4aff8c; box-shadow: 0 0 8px #4aff8c;
       animation: pulse 2s infinite;
     }
-
-    /* scanlines */
     .scanlines {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.1) 0px,
-        rgba(0, 0, 0, 0.1) 2px,
-        transparent 2px,
-        transparent 4px
-      );
-      pointer-events: none;
-      z-index: 20;
-      opacity: 0.25;
-      mix-blend-mode: overlay;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 4px);
+      pointer-events: none; z-index: 20; opacity: 0.25; mix-blend-mode: overlay;
     }
-
-    /* Responsive */
-    @media (max-width: 1100px) {
-      .search-section {
-        width: 480px;
-        max-width: 60vw;
-      }
-    }
-
+    @media (max-width: 1100px) { .search-section { width: 480px; max-width: 60vw; } }
     @media (max-width: 850px) {
-      .app-container {
-        flex-direction: column-reverse;
-      }
-      .search-section {
-        width: 100%;
-        max-width: 100%;
-        height: 60vh;
-        padding: 1rem;
-        background: rgba(10, 10, 10, 0.98);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-      }
-      .globe-section {
-        height: 40vh;
-        flex: none;
-      }
-      .top-header .brand {
-        font-size: 1.3rem;
-      }
-      .mode-tab {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.55rem;
-      }
-      .mode-tab .tab-icon {
-        display: none;
-      }
-      .coords-overlay {
-        display: none;
-      }
-      .globe-label {
-        display: none;
-      }
+      .app-container { flex-direction: column-reverse; }
+      .search-section { width: 100%; max-width: 100%; height: 60vh; padding: 1rem; background: rgba(10,10,10,0.98); border-top: 1px solid rgba(255,255,255,0.1); }
+      .globe-section { height: 40vh; flex: none; }
+      .top-header .brand { font-size: 1.3rem; }
+      .mode-tab { padding: 0.4rem 0.6rem; font-size: 0.55rem; }
+      .mode-tab .tab-icon { display: none; }
+      .coords-overlay, .globe-label { display: none; }
     }
-
     @media (max-width: 500px) {
-      .top-header .meta-info {
-        display: none;
-      }
-      .search-input-wrapper {
-        flex-direction: column;
-      }
-      .search-input-wrapper button {
-        padding: 0.7rem;
-        justify-content: center;
-      }
+      .top-header .meta-info { display: none; }
+      .search-input-wrapper { flex-direction: column; }
+      .search-input-wrapper button { padding: 0.7rem; justify-content: center; }
     }
   </style>
 </head>
 <body>
-  <!-- Main App Layout -->
   <div class="app-container">
-    <!-- Left: 3D Globe -->
     <div class="globe-section">
       <div id="canvas-container"></div>
-      <div class="globe-label">
-        <span class="dot"></span> GLOBAL SURVEILLANCE GRID
-      </div>
+      <div class="globe-label"><span class="dot"></span> GLOBAL SURVEILLANCE GRID</div>
       <div class="coords-overlay">
         <div>LAT <span>37.7749° N</span></div>
         <div>LON <span>122.4194° W</span></div>
         <div>ALT <span>45.2 M</span></div>
       </div>
     </div>
-
-    <!-- Right: Search Panel -->
     <div class="search-section">
       <div class="top-header">
         <div class="brand-block">
@@ -711,49 +244,22 @@
           <div class="subtitle">MULTI-VECTOR IDENTITY RECON</div>
         </div>
         <div class="meta-info">
-          <div>
-            <span class="label">NODE</span>
-            <span class="value">ALPHA-7</span>
-          </div>
-          <div>
-            <span class="label">STATUS</span>
-            <span class="value" style="color:#4aff8c;">ACTIVE</span>
-          </div>
+          <div><span class="label">NODE</span><span class="value">ALPHA-7</span></div>
+          <div><span class="label">STATUS</span><span class="value" style="color:#4aff8c;">ACTIVE</span></div>
         </div>
       </div>
-
-      <!-- Mode Tabs -->
       <div class="mode-tabs" id="modeTabs">
-        <button class="mode-tab active" data-mode="email">
-          <span class="tab-icon">✉</span> EMAIL
-        </button>
-        <button class="mode-tab" data-mode="discord">
-          <span class="tab-icon">◈</span> DISCORD ID
-        </button>
-        <button class="mode-tab" data-mode="steam">
-          <span class="tab-icon">◉</span> STEAM ID
-        </button>
-        <button class="mode-tab" data-mode="username">
-          <span class="tab-icon">@</span> USERNAME
-        </button>
-        <button class="mode-tab" data-mode="phone">
-          <span class="tab-icon">☎</span> PHONE
-        </button>
+        <button class="mode-tab active" data-mode="email"><span class="tab-icon">✉</span> EMAIL</button>
+        <button class="mode-tab" data-mode="steam"><span class="tab-icon">◉</span> STEAM</button>
+        <button class="mode-tab" data-mode="discord"><span class="tab-icon">◈</span> DISCORD</button>
       </div>
-
-      <!-- Search Input -->
       <div class="search-area">
         <label id="inputLabel" for="searchInput">TARGET EMAIL ADDRESS</label>
         <div class="search-input-wrapper">
           <input type="text" id="searchInput" placeholder="name@example.com" autocomplete="off" spellcheck="false">
-          <button id="scanBtn">
-            <span>SCAN</span>
-            <span style="font-size:0.85rem;">↗</span>
-          </button>
+          <button id="scanBtn"><span>SCAN</span><span style="font-size:0.85rem;">↗</span></button>
         </div>
       </div>
-
-      <!-- Status -->
       <div class="scan-status">
         <div class="status-text">
           <span class="dot done" id="statusDot"></span>
@@ -761,17 +267,13 @@
         </div>
         <span id="scanCount">0 SOURCES</span>
       </div>
-
-      <!-- Results -->
       <div class="results-container" id="resultsContainer">
         <div class="empty-state">
           <div class="icon">◈</div>
           <div>SELECT A VECTOR & ENTER TARGET</div>
-          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">GAMING · SOCIAL · BREACHES · DARK WEB</div>
+          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">STEAM · BREACH DATA · DISCORD</div>
         </div>
       </div>
-
-      <!-- Footer -->
       <div class="search-footer">
         <div class="status-group">
           <span><span class="dot"></span> UPLINK: SECURE</span>
@@ -781,17 +283,10 @@
       </div>
     </div>
   </div>
-
-  <!-- scanlines -->
   <div class="scanlines"></div>
 
-  <!-- Three.js -->
   <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
-      }
-    }
+    { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }
   </script>
 
   <script type="module">
@@ -799,56 +294,33 @@
     import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
 
     // =============================================
-    // 3D GLOBE (kept intact)
+    // 3D GLOBE (unchanged)
     // =============================================
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0a);
-
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
     camera.position.set(0, 1.5, 8);
-
     const container = document.getElementById('canvas-container');
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
-
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.2;
-    controls.enableZoom = true;
-    controls.zoomSpeed = 0.8;
-    controls.enablePan = false;
-    controls.rotateSpeed = 0.8;
-    controls.minDistance = 3;
-    controls.maxDistance = 14;
+    controls.enableDamping = true; controls.dampingFactor = 0.05;
+    controls.autoRotate = true; controls.autoRotateSpeed = 1.2;
+    controls.enableZoom = true; controls.zoomSpeed = 0.8;
+    controls.enablePan = false; controls.rotateSpeed = 0.8;
+    controls.minDistance = 3; controls.maxDistance = 14;
     controls.target.set(0, 0, 0);
-
-    // lights
     scene.add(new THREE.AmbientLight(0x404060));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(1, 2, 1);
-    scene.add(dirLight);
+    dirLight.position.set(1, 2, 1); scene.add(dirLight);
     const backLight = new THREE.PointLight(0x4466cc, 0.3);
-    backLight.position.set(-2, -1, -3);
-    scene.add(backLight);
-
-    // globe group
+    backLight.position.set(-2, -1, -3); scene.add(backLight);
     const group = new THREE.Group();
-
-    // wireframe sphere
     const sphereGeo = new THREE.SphereGeometry(2.2, 36, 24);
-    const sphereMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.25
-    });
+    const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.25 });
     group.add(new THREE.Mesh(sphereGeo, sphereMat));
-
-    // particles
     const particleCount = 1800;
     const particlesGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
@@ -861,56 +333,28 @@
       positions[i*3+2] = radius * Math.cos(phi);
     }
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const particlesMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.025,
-      transparent: true,
-      opacity: 0.5,
-      blending: THREE.AdditiveBlending
-    });
-    group.add(new THREE.Points(particlesGeo, particlesMat));
-
-    // rings
+    group.add(new THREE.Points(particlesGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending })));
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.2, transparent: true });
     const ring1Points = [];
-    for (let i = 0; i <= 64; i++) {
-      const angle = (i / 64) * Math.PI * 2;
-      ring1Points.push(new THREE.Vector3(Math.cos(angle) * 2.5, 0, Math.sin(angle) * 2.5));
-    }
+    for (let i = 0; i <= 64; i++) { const angle = (i/64)*Math.PI*2; ring1Points.push(new THREE.Vector3(Math.cos(angle)*2.5, 0, Math.sin(angle)*2.5)); }
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring1Points), ringMaterial));
-
     const ring2Points = [];
     for (let i = 0; i <= 64; i++) {
-      const angle = (i / 64) * Math.PI * 2;
-      const x = Math.cos(angle) * 2.8;
-      const y = Math.sin(angle) * 2.8 * 0.3;
-      const z = Math.sin(angle) * 2.8 * 0.8;
-      const rotatedY = y * Math.cos(0.8) - z * Math.sin(0.8);
-      const rotatedZ = y * Math.sin(0.8) + z * Math.cos(0.8);
-      ring2Points.push(new THREE.Vector3(x, rotatedY, rotatedZ));
+      const angle = (i/64)*Math.PI*2;
+      const x = Math.cos(angle)*2.8, y = Math.sin(angle)*2.8*0.3, z = Math.sin(angle)*2.8*0.8;
+      ring2Points.push(new THREE.Vector3(x, y*Math.cos(0.8)-z*Math.sin(0.8), y*Math.sin(0.8)+z*Math.cos(0.8)));
     }
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring2Points), ringMaterial));
-
     const ring3Points = [];
-    for (let i = 0; i <= 64; i++) {
-      const angle = (i / 64) * Math.PI * 2;
-      ring3Points.push(new THREE.Vector3(Math.cos(angle) * 1.2, Math.sin(angle) * 2.0, Math.cos(angle) * 1.0));
-    }
+    for (let i = 0; i <= 64; i++) { const angle = (i/64)*Math.PI*2; ring3Points.push(new THREE.Vector3(Math.cos(angle)*1.2, Math.sin(angle)*2.0, Math.cos(angle)*1.0)); }
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring3Points), ringMaterial));
-
-    // dots
     const dotPositions = [[2.22,0,0],[-2.22,0,0],[0,2.22,0],[0,-2.22,0],[0,0,2.22],[0,0,-2.22]];
     const dotGeo = new THREE.BufferGeometry();
     dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(dotPositions.flat()), 3));
     group.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, blending: THREE.AdditiveBlending })));
-
-    // core
     const core = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0x88aaff }));
     group.add(core);
-
     scene.add(group);
-
-    // stars
     const starCount = 600;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
@@ -922,8 +366,6 @@
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending }));
     scene.add(stars);
-
-    // animate
     let clock = new THREE.Clock();
     function animate() {
       const elapsedTime = performance.now() * 0.001;
@@ -937,23 +379,16 @@
       requestAnimationFrame(animate);
     }
     animate();
-
-    // resize for globe section only
     function resizeGlobe() {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w > 0 && h > 0) {
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, h);
-      }
+      const w = container.clientWidth, h = container.clientHeight;
+      if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); }
     }
     window.addEventListener('resize', resizeGlobe);
     resizeGlobe();
     renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // =============================================
-    // SEARCH ENGINE
+    // REAL DATA SEARCH ENGINE
     // =============================================
     const searchInput = document.getElementById('searchInput');
     const scanBtn = document.getElementById('scanBtn');
@@ -966,46 +401,30 @@
 
     let currentMode = 'email';
 
-    // Mode configuration
+    // Your Cloudflare Worker URL (replace this)
+    const WORKER_URL = 'https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+
     const modes = {
       email: {
         label: 'TARGET EMAIL ADDRESS',
         placeholder: 'name@example.com',
-        icon: '✉',
         validate: (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
         errorMsg: 'INVALID EMAIL FORMAT.'
+      },
+      steam: {
+        label: 'STEAM ID / VANITY / PROFILE URL',
+        placeholder: '76561198... or custom URL',
+        validate: (v) => v.length >= 3,
+        errorMsg: 'ENTER A VALID STEAM ID OR VANITY URL.'
       },
       discord: {
         label: 'DISCORD USER ID',
         placeholder: 'e.g. 123456789012345678',
-        icon: '◈',
         validate: (v) => /^\d{17,20}$/.test(v),
         errorMsg: 'DISCORD ID MUST BE 17-20 DIGITS.'
-      },
-      steam: {
-        label: 'STEAM ID / VANITY URL',
-        placeholder: '76561198... or custom URL',
-        icon: '◉',
-        validate: (v) => v.length >= 3,
-        errorMsg: 'ENTER A VALID STEAM ID OR VANITY URL.'
-      },
-      username: {
-        label: 'USERNAME / HANDLE',
-        placeholder: 'e.g. shadow_sniper99',
-        icon: '@',
-        validate: (v) => /^[a-zA-Z0-9_.-]{2,32}$/.test(v),
-        errorMsg: 'USERNAME MUST BE 2-32 CHARS (letters, numbers, _, ., -).'
-      },
-      phone: {
-        label: 'PHONE NUMBER',
-        placeholder: '+1 555 123 4567',
-        icon: '☎',
-        validate: (v) => /^[\d\s+\-()]{7,20}$/.test(v),
-        errorMsg: 'ENTER A VALID PHONE NUMBER.'
       }
     };
 
-    // Mode switching
     modeTabs.forEach(tab => {
       tab.addEventListener('click', () => {
         modeTabs.forEach(t => t.classList.remove('active'));
@@ -1020,267 +439,209 @@
       });
     });
 
-    // --- GENERATE GAMING / ACCOUNT RESULTS ---
-
-    const gamesList = [
-      'Counter-Strike 2', 'Valorant', 'League of Legends', 'Dota 2', 'Fortnite',
-      'Apex Legends', 'Call of Duty: Warzone', 'Overwatch 2', 'Rainbow Six Siege',
-      'Rust', 'Escape from Tarkov', 'GTA V', 'Minecraft', 'Roblox', 'PUBG',
-      'Rocket League', 'Destiny 2', 'Warframe', 'Path of Exile', 'World of Warcraft',
-      'Final Fantasy XIV', 'Elder Scrolls Online', 'Sea of Thieves', 'Deep Rock Galactic',
-      'Phasmophobia', 'Dead by Daylight', 'Among Us', 'Fall Guys', 'Rocket League'
-    ];
-
-    const gamingSources = [
-      { name: 'SteamDB', tag: 'STEAM', tagClass: 'steam' },
-      { name: 'Steam Community', tag: 'STEAM', tagClass: 'steam' },
-      { name: 'SteamRep', tag: 'STEAM', tagClass: 'steam' },
-      { name: 'Discord ID Lookup', tag: 'DISCORD', tagClass: 'discord' },
-      { name: 'Discord Bots DB', tag: 'DISCORD', tagClass: 'discord' },
-      { name: 'Disboard', tag: 'DISCORD', tagClass: 'discord' },
-      { name: 'Top.gg', tag: 'DISCORD', tagClass: 'discord' },
-      { name: 'Riot Games API', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'Faceit Finder', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'Tracker.gg', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'OP.GG', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'Leetify', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'SteamID.uk', tag: 'STEAM', tagClass: 'steam' },
-      { name: 'XboxGamertag', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'PSNProfiles', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'Nintendo ID DB', tag: 'GAMING', tagClass: 'gaming' },
-      { name: 'HaveIBeenPwned', tag: 'BREACH', tagClass: 'breach' },
-      { name: 'DeHashed', tag: 'LEAK', tagClass: 'breach' },
-      { name: 'IntelX', tag: 'INTEL', tagClass: 'breach' },
-      { name: 'Snusbase', tag: 'DB', tagClass: 'breach' },
-      { name: 'LeakCheck', tag: 'LEAK', tagClass: 'breach' },
-      { name: 'Twitter/X', tag: 'SOCIAL', tagClass: 'social' },
-      { name: 'GitHub', tag: 'CODE', tagClass: 'social' },
-      { name: 'Reddit', tag: 'SOCIAL', tagClass: 'social' },
-      { name: 'YouTube', tag: 'SOCIAL', tagClass: 'social' },
-      { name: 'Twitch', tag: 'SOCIAL', tagClass: 'social' },
-      { name: 'TikTok', tag: 'SOCIAL', tagClass: 'social' },
-      { name: 'Instagram', tag: 'SOCIAL', tagClass: 'social' },
-      { name: 'DarkWeb Index', tag: 'DARK', tagClass: 'dark' },
-      { name: 'GhostProject', tag: 'DARK', tagClass: 'dark' },
-      { name: 'PSBDMP', tag: 'PASTE', tagClass: 'social' },
-      { name: 'Pastebin', tag: 'PASTE', tagClass: 'social' },
-    ];
-
-    function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-    function generateGamingResult(target, source) {
-      const game1 = randomFrom(gamesList);
-      const game2 = randomFrom(gamesList);
-      const hours = Math.floor(Math.random() * 4000) + 20;
-      const rank = randomFrom(['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Master', 'Grandmaster', 'Immortal', 'Radiant', 'Elite', 'Legendary']);
-      const region = randomFrom(['NA', 'EU', 'ASIA', 'SA', 'OCE', 'ME']);
-      const kd = (Math.random() * 3 + 0.3).toFixed(2);
-      const winrate = Math.floor(Math.random() * 40 + 40);
-      const friends = Math.floor(Math.random() * 500);
-      const vac = Math.random() > 0.85;
-      const level = Math.floor(Math.random() * 500) + 1;
-      const joinYear = Math.floor(Math.random() * 15) + 2008;
-
-      // Build result text based on source category
-      let text = '';
-      const t = target.toLowerCase();
-
-      const templates = {
-        steam: [
-          `Steam profile linked: <span class="highlight">steamcommunity.com/id/${t.replace(/[^a-z0-9]/g, '')}</span>`,
-          `Owns <span class="highlight">${Math.floor(Math.random()*300)+10}</span> games · <span class="highlight">${hours}h</span> on record`,
-          `VAC status: <span class="highlight" style="color:${vac ? '#ff6b6b' : '#8aff8a'}">${vac ? 'BANNED' : 'CLEAN'}</span> · Level ${level}`,
-          `Last online: <span class="highlight">${new Date(Date.now() - Math.random()*30*24*60*60*1000).toLocaleDateString()}</span>`,
-          `Friends: <span class="highlight">${friends}</span> · Member since <span class="highlight">${joinYear}</span>`,
-        ],
-        discord: [
-          `Discord ID: <span class="highlight">${Math.floor(Math.random()*900000000000000000)+100000000000000000}</span>`,
-          `Registered: <span class="highlight">${new Date(Date.now() - Math.random()*5*365*24*60*60*1000).toLocaleDateString()}</span>`,
-          `Servers: <span class="highlight">${Math.floor(Math.random()*50)+3}</span> · Nickname history: <span class="highlight">${Math.random().toString(36).substring(2,8)}</span>`,
-          `Connected accounts: <span class="highlight">${randomFrom(['Steam','Twitch','YouTube','Spotify','GitHub','Xbox','PlayStation'])}</span>`,
-          `Badges: <span class="highlight">${randomFrom(['Early Supporter','Nitro','HypeSquad','Bug Hunter','Verified Bot'])}</span>`,
-        ],
-        gaming: [
-          `<span class="game-tag">${game1}</span> — Rank: <span class="highlight">${rank}</span> · K/D: <span class="highlight">${kd}</span> · Winrate: <span class="highlight">${winrate}%</span>`,
-          `<span class="game-tag">${game2}</span> — <span class="highlight">${hours}h</span> played · Region <span class="highlight">${region}</span>`,
-          `Linked game accounts: <span class="highlight">${randomFrom(['Steam','Xbox','PSN','Epic','Battle.net','Riot'])}</span> · <span class="highlight">${randomFrom(['Steam','Xbox','PSN','Epic','Battle.net','Riot'])}</span>`,
-          `Tournament history: <span class="highlight">${Math.floor(Math.random()*20)}</span> events · Team: <span class="highlight">${randomFrom(['Sentinels','FaZe','G2','TSM','C9','Fnatic','NAVI','Liquid'])}</span>`,
-        ],
-        breach: [
-          `Found in <span class="highlight">${randomFrom(['Collection #1','AntiPublic','Exploit.in','Deezer','MyFitnessPal','Adobe','Dropbox','Zynga','Steam'])}</span> breach`,
-          `Credentials: <span class="highlight">${t.substring(0,4)}${'*'.repeat(Math.min(t.length,6))}</span> (hashed) · Passwords reused: <span class="highlight">${Math.floor(Math.random()*8)+1}</span>`,
-          `Records: <span class="highlight">${Math.floor(Math.random()*50)+1}</span> · Confidence: <span class="highlight">${Math.floor(Math.random()*30)+70}%</span>`,
-        ],
-        social: [
-          `Profile: <span class="highlight">@${t.replace(/[^a-z0-9_.]/g,'')}</span> · Followers: <span class="highlight">${Math.floor(Math.random()*50000)}</span>`,
-          `Bio: "<span class="highlight">${randomFrom(['gamer','streamer','content creator','esports','just here for the memes','GG'])}</span>"`,
-          `Last post: <span class="highlight">${new Date(Date.now() - Math.random()*60*24*60*60*1000).toLocaleDateString()}</span>`,
-        ],
-        dark: [
-          `Dark web mention: <span class="highlight">${Math.floor(Math.random()*100)} results</span>`,
-          `Leaked database: <span class="highlight">${randomFrom(['Combolist','Stealer Logs','Session Tokens','Discord Tokens'])}</span>`,
-          `Risk score: <span class="highlight" style="color:#ff6b6b">HIGH</span> · Threat level: <span class="highlight">${Math.floor(Math.random()*10)}</span>/10`,
-        ]
-      };
-
-      const pool = templates[source.tagClass] || templates.gaming;
-      text = randomFrom(pool);
-
-      return {
-        source: source.name,
-        tag: source.tag,
-        tagClass: source.tagClass,
-        text: text,
-        confidence: Math.floor(Math.random() * 30) + 70,
-        date: new Date(Date.now() - Math.random() * 730 * 24 * 60 * 60 * 1000).toLocaleDateString()
-      };
-    }
-
-    // UI helpers
     function setStatus(state, label) {
       statusDot.className = 'dot ' + state;
       statusLabel.textContent = label;
     }
-
-    function setScanCount(count) {
-      scanCount.textContent = count + ' SOURCES';
-    }
-
+    function setScanCount(count) { scanCount.textContent = count + ' SOURCES'; }
     function clearResults() {
-      resultsContainer.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">◈</div>
-          <div>SELECT A VECTOR & ENTER TARGET</div>
-          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">GAMING · SOCIAL · BREACHES · DARK WEB</div>
-        </div>
-      `;
-      setScanCount(0);
-      setStatus('done', 'READY');
+      resultsContainer.innerHTML = `<div class="empty-state"><div class="icon">◈</div><div>SELECT A VECTOR & ENTER TARGET</div><div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">STEAM · BREACH DATA · DISCORD</div></div>`;
+      setScanCount(0); setStatus('done', 'READY');
     }
-
     function showError(msg) {
       resultsContainer.innerHTML = `<div class="error-message">${msg}</div>`;
-      setScanCount(0);
-      setStatus('error', 'ERROR');
+      setScanCount(0); setStatus('error', 'ERROR');
     }
 
-    // Main scan
+    // --- REAL API CALLS VIA WORKER ---
+    async function fetchSteamData(query) {
+      const url = `${WORKER_URL}/steam?q=${encodeURIComponent(query)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Steam API error: ${res.status}`);
+      return res.json();
+    }
+
+    async function fetchHudsonRock(email) {
+      const url = `${WORKER_URL}/hudsonrock?email=${encodeURIComponent(email)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HudsonRock API error: ${res.status}`);
+      return res.json();
+    }
+
+    async function fetchGravatar(email) {
+      const url = `${WORKER_URL}/gravatar?email=${encodeURIComponent(email)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Gravatar API error: ${res.status}`);
+      return res.json();
+    }
+
+    async function fetchDiscord(userId) {
+      const url = `${WORKER_URL}/discord?id=${encodeURIComponent(userId)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Discord API error: ${res.status}`);
+      return res.json();
+    }
+
+    // --- RENDER HELPERS ---
+    function renderResult(sourceName, tagClass, text, confidence, date) {
+      const el = document.createElement('div');
+      el.className = 'result-item';
+      el.innerHTML = `
+        <div class="source">
+          <span class="tag ${tagClass}">${tagClass.toUpperCase()}</span>
+          <span>${sourceName}</span>
+        </div>
+        <div class="data">${text}</div>
+        <div class="meta">
+          <span>CONFIDENCE: ${confidence}%</span>
+          <span>${date || 'LIVE'}</span>
+        </div>
+      `;
+      resultsContainer.appendChild(el);
+      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+    }
+
+    // --- MAIN SCAN ---
     async function performScan(target) {
       const cfg = modes[currentMode];
-      if (!cfg.validate(target)) {
-        showError(cfg.errorMsg);
-        return;
-      }
+      if (!cfg.validate(target)) { showError(cfg.errorMsg); return; }
 
-      // Update button
       scanBtn.disabled = true;
       scanBtn.innerHTML = '<span class="spinner"></span> SCAN';
       setStatus('scanning', 'SCANNING');
       resultsContainer.innerHTML = '';
       setScanCount(0);
 
-      // Pick relevant sources for mode
-      let activeSources;
-      if (currentMode === 'email') {
-        activeSources = gamingSources;
-      } else if (currentMode === 'discord') {
-        activeSources = gamingSources.filter(s => 
-          ['discord', 'gaming', 'breach', 'social', 'dark'].includes(s.tagClass)
-        );
-      } else if (currentMode === 'steam') {
-        activeSources = gamingSources.filter(s => 
-          ['steam', 'gaming', 'breach', 'social'].includes(s.tagClass)
-        );
-      } else if (currentMode === 'username') {
-        activeSources = gamingSources.filter(s => 
-          ['social', 'gaming', 'discord', 'steam', 'breach'].includes(s.tagClass)
-        );
-      } else {
-        activeSources = gamingSources;
-      }
+      try {
+        let found = 0;
 
-      // Shuffle and limit
-      const shuffled = [...activeSources].sort(() => Math.random() - 0.5);
-      const foundResults = [];
-      const total = shuffled.length;
-      const scanDuration = 3000 + Math.random() * 2000;
-      const stepTime = scanDuration / total;
-
-      for (let i = 0; i < shuffled.length; i++) {
-        const source = shuffled[i];
-        // Higher hit chance for gaming/discord/steam modes
-        let hitChance = 0.65;
-        if (currentMode === 'discord' && source.tagClass === 'discord') hitChance = 0.95;
-        if (currentMode === 'steam' && source.tagClass === 'steam') hitChance = 0.95;
-        if (currentMode === 'username' && source.tagClass === 'social') hitChance = 0.85;
-        if (currentMode === 'email' && source.tagClass === 'breach') hitChance = 0.75;
-
-        if (Math.random() < hitChance) {
-          const result = generateGamingResult(target, source);
-          foundResults.push(result);
-
-          const el = document.createElement('div');
-          el.className = 'result-item';
-          el.innerHTML = `
-            <div class="source">
-              <span class="tag ${result.tagClass}">${result.tag}</span>
-              <span>${result.source}</span>
-            </div>
-            <div class="data">${result.text}</div>
-            <div class="meta">
-              <span>CONFIDENCE: ${result.confidence}%</span>
-              <span>${result.date}</span>
-            </div>
-          `;
-          resultsContainer.appendChild(el);
-          resultsContainer.scrollTop = resultsContainer.scrollHeight;
-          setScanCount(foundResults.length);
+        if (currentMode === 'steam') {
+          setStatus('scanning', 'FETCHING STEAM...');
+          const data = await fetchSteamData(target);
+          const players = data?.response?.players || data?.players || [];
+          if (players.length > 0) {
+            const p = players[0];
+            renderResult('Steam Web API', 'steam',
+              `Persona: <span class="highlight">${p.personaname || 'N/A'}</span>`, 95, 'LIVE');
+            renderResult('Steam Web API', 'steam',
+              `Profile URL: <span class="highlight">${p.profileurl || 'N/A'}</span>`, 95, 'LIVE');
+            renderResult('Steam Web API', 'steam',
+              `Status: <span class="highlight">${p.personastate || 'Offline'}</span>`, 90, 'LIVE');
+            if (p.gameextrainfo) {
+              renderResult('Steam Web API', 'gaming',
+                `Currently playing: <span class="game-tag">${p.gameextrainfo}</span>`, 99, 'LIVE');
+            }
+            found = 4;
+          } else {
+            renderResult('Steam Web API', 'steam', 'No public profile data found for this ID.', 0, 'LIVE');
+          }
         }
 
-        const progress = Math.floor(((i + 1) / total) * 100);
-        statusLabel.textContent = `SCANNING ${progress}%`;
-        await new Promise(r => setTimeout(r, stepTime));
+        if (currentMode === 'email') {
+          // 1. HudsonRock (free, no key)
+          setStatus('scanning', 'HUDSONROCK...');
+          try {
+            const hr = await fetchHudsonRock(target);
+            if (hr && hr.stealers && hr.stealers.length > 0) {
+              const s = hr.stealers[0];
+              renderResult('HudsonRock Cavalier', 'breach',
+                `Infostealer: <span class="highlight">${s.stealer_family || 'Unknown'}</span>`, 90, 'LIVE');
+              renderResult('HudsonRock Cavalier', 'breach',
+                `Computer: <span class="highlight">${s.computer_name || 'N/A'}</span> · OS: <span class="highlight">${s.os || 'N/A'}</span>`, 85, 'LIVE');
+              if (s.top_logins && s.top_logins.length > 0) {
+                renderResult('HudsonRock Cavalier', 'breach',
+                  `Leaked logins: <span class="highlight">${s.top_logins.join(', ')}</span>`, 80, 'LIVE');
+              }
+              if (s.ip_address) {
+                renderResult('HudsonRock Cavalier', 'breach',
+                  `IP: <span class="highlight">${s.ip_address}</span>`, 75, 'LIVE');
+              }
+              found += 3;
+            } else {
+              renderResult('HudsonRock Cavalier', 'breach', 'No infostealer compromise found.', 0, 'LIVE');
+            }
+          } catch(e) { console.warn('HudsonRock failed:', e.message); }
+
+          // 2. Gravatar (free, no key)
+          setStatus('scanning', 'GRAVATAR...');
+          try {
+            const gv = await fetchGravatar(target);
+            if (gv && gv.hash) {
+              renderResult('Gravatar', 'social',
+                `Display name: <span class="highlight">${gv.display_name || 'N/A'}</span>`, 95, 'LIVE');
+              if (gv.location) renderResult('Gravatar', 'social', `Location: <span class="highlight">${gv.location}</span>`, 90, 'LIVE');
+              if (gv.job_title) renderResult('Gravatar', 'social', `Job: <span class="highlight">${gv.job_title}</span>`, 85, 'LIVE');
+              if (gv.company) renderResult('Gravatar', 'social', `Company: <span class="highlight">${gv.company}</span>`, 85, 'LIVE');
+              if (gv.verified_accounts && gv.verified_accounts.length > 0) {
+                renderResult('Gravatar', 'social',
+                  `Verified: <span class="highlight">${gv.verified_accounts.map(a => a.service).join(', ')}</span>`, 90, 'LIVE');
+              }
+              found += 2;
+            }
+          } catch(e) { console.warn('Gravatar failed:', e.message); }
+
+          // 3. HIBP (only if you add a paid key to Worker)
+          setStatus('scanning', 'HIBP...');
+          try {
+            const hibp = await fetch(`${WORKER_URL}/hibp?email=${encodeURIComponent(target)}`);
+            if (hibp.ok) {
+              const data = await hibp.json();
+              if (Array.isArray(data) && data.length > 0) {
+                data.slice(0, 5).forEach(b => {
+                  renderResult('HaveIBeenPwned', 'breach',
+                    `Breach: <span class="highlight">${b.Name || b.Title}</span> (${b.PwnCount?.toLocaleString() || '?'} accounts)`, 95, 'LIVE');
+                });
+                found += data.length;
+              }
+            }
+          } catch(e) { console.warn('HIBP skipped (needs paid key):', e.message); }
+        }
+
+        if (currentMode === 'discord') {
+          setStatus('scanning', 'DISCORD...');
+          try {
+            const dc = await fetchDiscord(target);
+            if (dc && dc.id) {
+              renderResult('Discord API', 'discord',
+                `Username: <span class="highlight">${dc.username || 'N/A'}</span>`, 99, 'LIVE');
+              if (dc.global_name) renderResult('Discord API', 'discord', `Display name: <span class="highlight">${dc.global_name}</span>`, 99, 'LIVE');
+              renderResult('Discord API', 'discord',
+                `Avatar: <span class="highlight">${dc.avatar ? 'Yes' : 'Default'}</span>`, 90, 'LIVE');
+              if (dc.banner) renderResult('Discord API', 'discord', `Banner: <span class="highlight">Present</span>`, 85, 'LIVE');
+              found = 3;
+            }
+          } catch(e) {
+            if (e.message.includes('401') || e.message.includes('403')) {
+              showError('Discord lookup requires a bot token in the Worker. Add DISCORD_BOT_TOKEN secret.');
+            } else {
+              console.warn('Discord failed:', e.message);
+            }
+          }
+        }
+
+        setScanCount(found);
+        setStatus('done', found > 0 ? 'COMPLETE' : 'CLEAN');
+        if (found === 0) {
+          resultsContainer.innerHTML = `<div class="empty-state"><div class="icon">✓</div><div>NO RESULTS FOUND</div><div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">TARGET APPEARS CLEAN IN SCANNED SOURCES</div></div>`;
+        }
+      } catch (err) {
+        showError('SCAN FAILED: ' + err.message);
+        console.error(err);
       }
 
-      if (foundResults.length === 0) {
-        resultsContainer.innerHTML = `
-          <div class="empty-state">
-            <div class="icon">✓</div>
-            <div>NO RESULTS FOUND</div>
-            <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">TARGET APPEARS CLEAN IN SCANNED SOURCES</div>
-          </div>
-        `;
-        setStatus('done', 'CLEAN');
-      } else {
-        setStatus('done', 'COMPLETE');
-      }
-
-      setScanCount(foundResults.length);
       scanBtn.disabled = false;
       scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.85rem;">↗</span>';
     }
 
-    // Events
     scanBtn.addEventListener('click', () => {
       const v = searchInput.value.trim();
-      if (!v) {
-        showError('PLEASE ENTER A TARGET VALUE.');
-        return;
-      }
+      if (!v) { showError('PLEASE ENTER A TARGET VALUE.'); return; }
       performScan(v);
     });
-
     searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        scanBtn.click();
-      }
+      if (e.key === 'Enter') { e.preventDefault(); scanBtn.click(); }
     });
-
-    window.addEventListener('load', () => {
-      setTimeout(() => searchInput.focus(), 500);
-    });
-
+    window.addEventListener('load', () => setTimeout(() => searchInput.focus(), 500));
   </script>
 </body>
 </html>
