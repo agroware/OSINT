@@ -294,7 +294,7 @@
     import { OrbitControls } from 'https://unpkg.com/three@0.128.0/examples/jsm/controls/OrbitControls.js';
 
     // =============================================
-    // 3D GLOBE (unchanged)
+    // 3D GLOBE (with contour outlines)
     // =============================================
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0a);
@@ -317,10 +317,47 @@
     dirLight.position.set(1, 2, 1); scene.add(dirLight);
     const backLight = new THREE.PointLight(0x4466cc, 0.3);
     backLight.position.set(-2, -1, -3); scene.add(backLight);
+
     const group = new THREE.Group();
+
+    // Main wireframe sphere
     const sphereGeo = new THREE.SphereGeometry(2.2, 36, 24);
-    const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.25 });
+    const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.22 });
     group.add(new THREE.Mesh(sphereGeo, sphereMat));
+
+    // Contour outline sphere (extra latitude lines for topographical feel)
+    const contourGeo = new THREE.SphereGeometry(2.205, 24, 48);
+    const contourMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.08
+    });
+    group.add(new THREE.Mesh(contourGeo, contourMat));
+
+    // Latitude rings (contour lines)
+    const latRingMat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.15, transparent: true });
+    for (let lat = -75; lat <= 75; lat += 15) {
+      const phi = (90 - lat) * Math.PI / 180;
+      const radius = 2.21 * Math.sin(phi);
+      const y = 2.21 * Math.cos(phi);
+      const points = [];
+      for (let i = 0; i <= 48; i++) {
+        const theta = (i / 48) * Math.PI * 2;
+        points.push(new THREE.Vector3(
+          radius * Math.cos(theta),
+          y,
+          radius * Math.sin(theta)
+        ));
+      }
+      const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(points),
+        latRingMat
+      );
+      group.add(line);
+    }
+
+    // Particles
     const particleCount = 1800;
     const particlesGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
@@ -334,6 +371,8 @@
     }
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     group.add(new THREE.Points(particlesGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending })));
+
+    // Orbit rings
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.2, transparent: true });
     const ring1Points = [];
     for (let i = 0; i <= 64; i++) { const angle = (i/64)*Math.PI*2; ring1Points.push(new THREE.Vector3(Math.cos(angle)*2.5, 0, Math.sin(angle)*2.5)); }
@@ -348,13 +387,20 @@
     const ring3Points = [];
     for (let i = 0; i <= 64; i++) { const angle = (i/64)*Math.PI*2; ring3Points.push(new THREE.Vector3(Math.cos(angle)*1.2, Math.sin(angle)*2.0, Math.cos(angle)*1.0)); }
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring3Points), ringMaterial));
+
+    // Axis dots
     const dotPositions = [[2.22,0,0],[-2.22,0,0],[0,2.22,0],[0,-2.22,0],[0,0,2.22],[0,0,-2.22]];
     const dotGeo = new THREE.BufferGeometry();
     dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(dotPositions.flat()), 3));
     group.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, blending: THREE.AdditiveBlending })));
+
+    // Core
     const core = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0x88aaff }));
     group.add(core);
+
     scene.add(group);
+
+    // Stars
     const starCount = 600;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
@@ -366,29 +412,34 @@
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.08, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending }));
     scene.add(stars);
-    let clock = new THREE.Clock();
+
     function animate() {
-      const elapsedTime = performance.now() * 0.001;
+      const t = performance.now() * 0.001;
       group.rotation.y += 0.0005;
-      group.rotation.x = Math.sin(elapsedTime * 0.1) * 0.05;
-      group.rotation.z = Math.cos(elapsedTime * 0.15) * 0.03;
+      group.rotation.x = Math.sin(t * 0.1) * 0.05;
+      group.rotation.z = Math.cos(t * 0.15) * 0.03;
       controls.update();
-      core.scale.setScalar(1 + Math.sin(elapsedTime * 8) * 0.15);
+      core.scale.setScalar(1 + Math.sin(t * 8) * 0.15);
       stars.rotation.y += 0.0001;
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     }
     animate();
+
     function resizeGlobe() {
       const w = container.clientWidth, h = container.clientHeight;
-      if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); }
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
     }
     window.addEventListener('resize', resizeGlobe);
     resizeGlobe();
     renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // =============================================
-    // REAL DATA SEARCH ENGINE
+    // SEARCH ENGINE
     // =============================================
     const searchInput = document.getElementById('searchInput');
     const scanBtn = document.getElementById('scanBtn');
@@ -400,9 +451,7 @@
     const modeTabs = document.querySelectorAll('.mode-tab');
 
     let currentMode = 'email';
-
-    // Your Cloudflare Worker URL (replace this)
-    const WORKER_URL = 'https://osint-2me.pages.dev/';
+    const WORKER_URL = 'https://osint.agroware2026.workers.dev';
 
     const modes = {
       email: {
@@ -453,36 +502,6 @@
       setScanCount(0); setStatus('error', 'ERROR');
     }
 
-    // --- REAL API CALLS VIA WORKER ---
-    async function fetchSteamData(query) {
-      const url = `${WORKER_URL}/steam?q=${encodeURIComponent(query)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Steam API error: ${res.status}`);
-      return res.json();
-    }
-
-    async function fetchHudsonRock(email) {
-      const url = `${WORKER_URL}/hudsonrock?email=${encodeURIComponent(email)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HudsonRock API error: ${res.status}`);
-      return res.json();
-    }
-
-    async function fetchGravatar(email) {
-      const url = `${WORKER_URL}/gravatar?email=${encodeURIComponent(email)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Gravatar API error: ${res.status}`);
-      return res.json();
-    }
-
-    async function fetchDiscord(userId) {
-      const url = `${WORKER_URL}/discord?id=${encodeURIComponent(userId)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Discord API error: ${res.status}`);
-      return res.json();
-    }
-
-    // --- RENDER HELPERS ---
     function renderResult(sourceName, tagClass, text, confidence, date) {
       const el = document.createElement('div');
       el.className = 'result-item';
@@ -501,7 +520,6 @@
       resultsContainer.scrollTop = resultsContainer.scrollHeight;
     }
 
-    // --- MAIN SCAN ---
     async function performScan(target) {
       const cfg = modes[currentMode];
       if (!cfg.validate(target)) { showError(cfg.errorMsg); return; }
@@ -515,106 +533,124 @@
       try {
         let found = 0;
 
+        // ----- STEAM -----
         if (currentMode === 'steam') {
           setStatus('scanning', 'FETCHING STEAM...');
-          const data = await fetchSteamData(target);
-          const players = data?.response?.players || data?.players || [];
-          if (players.length > 0) {
-            const p = players[0];
-            renderResult('Steam Web API', 'steam',
-              `Persona: <span class="highlight">${p.personaname || 'N/A'}</span>`, 95, 'LIVE');
-            renderResult('Steam Web API', 'steam',
-              `Profile URL: <span class="highlight">${p.profileurl || 'N/A'}</span>`, 95, 'LIVE');
-            renderResult('Steam Web API', 'steam',
-              `Status: <span class="highlight">${p.personastate || 'Offline'}</span>`, 90, 'LIVE');
-            if (p.gameextrainfo) {
-              renderResult('Steam Web API', 'gaming',
-                `Currently playing: <span class="game-tag">${p.gameextrainfo}</span>`, 99, 'LIVE');
+          const res = await fetch(`${WORKER_URL}/steam?q=${encodeURIComponent(target)}`);
+          if (!res.ok) throw new Error(`Steam lookup failed (${res.status})`);
+          const data = await res.json();
+
+          const steam = data.steam || {};
+          const ids = data.ids || {};
+          const bans = data.bans || {};
+
+          if (steam.personaname || ids.steamid) {
+            renderResult('Steam Profile', 'steam',
+              `Persona: <span class="highlight">${steam.personaname || 'N/A'}</span>`, 98, 'LIVE');
+            if (ids.steamid) renderResult('Steam ID', 'steam',
+              `SteamID64: <span class="highlight">${ids.steamid}</span>`, 99, 'LIVE');
+            if (steam.profileurl) renderResult('Steam Profile', 'steam',
+              `Profile URL: <span class="highlight">${steam.profileurl}</span>`, 99, 'LIVE');
+            if (steam.personastate !== undefined) {
+              const states = ['Offline','Online','Busy','Away','Snooze','Looking to trade','Looking to play'];
+              renderResult('Steam Status', 'steam',
+                `Status: <span class="highlight">${states[steam.personastate] || steam.personastate}</span>`, 95, 'LIVE');
             }
-            found = 4;
+            if (steam.gameextrainfo) {
+              renderResult('In-Game', 'gaming',
+                `Currently playing: <span class="game-tag">${steam.gameextrainfo}</span>`, 99, 'LIVE');
+            }
+            if (steam.avatarfull) {
+              renderResult('Avatar', 'steam',
+                `<img src="${steam.avatarfull}" style="max-width:64px;border:1px solid rgba(255,255,255,0.2);border-radius:2px;margin-top:4px;">`, 99, 'LIVE');
+            }
+            if (bans.VACBanned) {
+              renderResult('VAC', 'breach',
+                `VAC BANNED — <span class="highlight">${bans.NumberOfVACBans || '?'} bans</span> · ${bans.DaysSinceLastBan || '?'} days ago`, 99, 'LIVE');
+            }
+            if (bans.CommunityBanned) {
+              renderResult('Bans', 'breach',
+                `Community banned: <span class="highlight">YES</span>`, 99, 'LIVE');
+            }
+            found = 6;
           } else {
-            renderResult('Steam Web API', 'steam', 'No public profile data found for this ID.', 0, 'LIVE');
+            renderResult('Steam', 'steam', 'No public Steam profile found.', 0, 'LIVE');
           }
         }
 
+        // ----- EMAIL -----
         if (currentMode === 'email') {
-          // 1. HudsonRock (free, no key)
+          // HudsonRock
           setStatus('scanning', 'HUDSONROCK...');
           try {
-            const hr = await fetchHudsonRock(target);
-            if (hr && hr.stealers && hr.stealers.length > 0) {
-              const s = hr.stealers[0];
-              renderResult('HudsonRock Cavalier', 'breach',
-                `Infostealer: <span class="highlight">${s.stealer_family || 'Unknown'}</span>`, 90, 'LIVE');
-              renderResult('HudsonRock Cavalier', 'breach',
-                `Computer: <span class="highlight">${s.computer_name || 'N/A'}</span> · OS: <span class="highlight">${s.os || 'N/A'}</span>`, 85, 'LIVE');
-              if (s.top_logins && s.top_logins.length > 0) {
-                renderResult('HudsonRock Cavalier', 'breach',
-                  `Leaked logins: <span class="highlight">${s.top_logins.join(', ')}</span>`, 80, 'LIVE');
+            const hrRes = await fetch(`${WORKER_URL}/hudsonrock?email=${encodeURIComponent(target)}`);
+            if (hrRes.ok) {
+              const hr = await hrRes.json();
+              if (hr && hr.stealers && hr.stealers.length > 0) {
+                const s = hr.stealers[0];
+                renderResult('HudsonRock', 'breach',
+                  `Infostealer: <span class="highlight">${s.stealer_family || 'Unknown'}</span>`, 92, 'LIVE');
+                if (s.computer_name) renderResult('HudsonRock', 'breach',
+                  `Computer: <span class="highlight">${s.computer_name}</span> · OS: <span class="highlight">${s.os || 'N/A'}</span>`, 88, 'LIVE');
+                if (s.ip_address) renderResult('HudsonRock', 'breach',
+                  `IP: <span class="highlight">${s.ip_address}</span>`, 80, 'LIVE');
+                if (s.top_logins && s.top_logins.length) renderResult('HudsonRock', 'breach',
+                  `Leaked logins: <span class="highlight">${s.top_logins.slice(0,5).join(', ')}</span>`, 85, 'LIVE');
+                found += 3;
+              } else {
+                renderResult('HudsonRock', 'breach', 'No infostealer compromise found.', 0, 'LIVE');
               }
-              if (s.ip_address) {
-                renderResult('HudsonRock Cavalier', 'breach',
-                  `IP: <span class="highlight">${s.ip_address}</span>`, 75, 'LIVE');
-              }
-              found += 3;
-            } else {
-              renderResult('HudsonRock Cavalier', 'breach', 'No infostealer compromise found.', 0, 'LIVE');
             }
           } catch(e) { console.warn('HudsonRock failed:', e.message); }
 
-          // 2. Gravatar (free, no key)
+          // Gravatar
           setStatus('scanning', 'GRAVATAR...');
           try {
-            const gv = await fetchGravatar(target);
-            if (gv && gv.hash) {
-              renderResult('Gravatar', 'social',
-                `Display name: <span class="highlight">${gv.display_name || 'N/A'}</span>`, 95, 'LIVE');
-              if (gv.location) renderResult('Gravatar', 'social', `Location: <span class="highlight">${gv.location}</span>`, 90, 'LIVE');
-              if (gv.job_title) renderResult('Gravatar', 'social', `Job: <span class="highlight">${gv.job_title}</span>`, 85, 'LIVE');
-              if (gv.company) renderResult('Gravatar', 'social', `Company: <span class="highlight">${gv.company}</span>`, 85, 'LIVE');
-              if (gv.verified_accounts && gv.verified_accounts.length > 0) {
+            const gvRes = await fetch(`${WORKER_URL}/gravatar?email=${encodeURIComponent(target)}`);
+            if (gvRes.ok) {
+              const gv = await gvRes.json();
+              if (gv && gv.displayName) {
                 renderResult('Gravatar', 'social',
-                  `Verified: <span class="highlight">${gv.verified_accounts.map(a => a.service).join(', ')}</span>`, 90, 'LIVE');
+                  `Display name: <span class="highlight">${gv.displayName}</span>`, 95, 'LIVE');
+                if (gv.aboutMe) renderResult('Gravatar', 'social',
+                  `Bio: <span class="highlight">${gv.aboutMe.substring(0,120)}</span>`, 90, 'LIVE');
+                if (gv.currentLocation) renderResult('Gravatar', 'social',
+                  `Location: <span class="highlight">${gv.currentLocation}</span>`, 90, 'LIVE');
+                if (gv.verifiedAccounts && gv.verifiedAccounts.length) {
+                  const services = gv.verifiedAccounts.map(a => a.service_type || a.service).filter(Boolean).join(', ');
+                  if (services) renderResult('Gravatar', 'social',
+                    `Verified: <span class="highlight">${services}</span>`, 90, 'LIVE');
+                }
+                found += 2;
+              } else {
+                renderResult('Gravatar', 'social', 'No public Gravatar profile.', 0, 'LIVE');
               }
-              found += 2;
             }
           } catch(e) { console.warn('Gravatar failed:', e.message); }
-
-          // 3. HIBP (only if you add a paid key to Worker)
-          setStatus('scanning', 'HIBP...');
-          try {
-            const hibp = await fetch(`${WORKER_URL}/hibp?email=${encodeURIComponent(target)}`);
-            if (hibp.ok) {
-              const data = await hibp.json();
-              if (Array.isArray(data) && data.length > 0) {
-                data.slice(0, 5).forEach(b => {
-                  renderResult('HaveIBeenPwned', 'breach',
-                    `Breach: <span class="highlight">${b.Name || b.Title}</span> (${b.PwnCount?.toLocaleString() || '?'} accounts)`, 95, 'LIVE');
-                });
-                found += data.length;
-              }
-            }
-          } catch(e) { console.warn('HIBP skipped (needs paid key):', e.message); }
         }
 
+        // ----- DISCORD -----
         if (currentMode === 'discord') {
           setStatus('scanning', 'DISCORD...');
-          try {
-            const dc = await fetchDiscord(target);
+          const dcRes = await fetch(`${WORKER_URL}/discord?id=${encodeURIComponent(target)}`);
+          if (dcRes.status === 401) {
+            showError('Discord bot token not configured in Worker.');
+            scanBtn.disabled = false;
+            scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.85rem;">↗</span>';
+            return;
+          }
+          if (dcRes.ok) {
+            const dc = await dcRes.json();
             if (dc && dc.id) {
-              renderResult('Discord API', 'discord',
+              renderResult('Discord', 'discord',
                 `Username: <span class="highlight">${dc.username || 'N/A'}</span>`, 99, 'LIVE');
-              if (dc.global_name) renderResult('Discord API', 'discord', `Display name: <span class="highlight">${dc.global_name}</span>`, 99, 'LIVE');
-              renderResult('Discord API', 'discord',
-                `Avatar: <span class="highlight">${dc.avatar ? 'Yes' : 'Default'}</span>`, 90, 'LIVE');
-              if (dc.banner) renderResult('Discord API', 'discord', `Banner: <span class="highlight">Present</span>`, 85, 'LIVE');
+              if (dc.global_name) renderResult('Discord', 'discord',
+                `Display name: <span class="highlight">${dc.global_name}</span>`, 99, 'LIVE');
+              renderResult('Discord', 'discord',
+                `Avatar: <span class="highlight">${dc.avatar ? 'Custom' : 'Default'}</span>`, 90, 'LIVE');
+              if (dc.banner) renderResult('Discord', 'discord',
+                `Banner: <span class="highlight">Present</span>`, 85, 'LIVE');
               found = 3;
-            }
-          } catch(e) {
-            if (e.message.includes('401') || e.message.includes('403')) {
-              showError('Discord lookup requires a bot token in the Worker. Add DISCORD_BOT_TOKEN secret.');
-            } else {
-              console.warn('Discord failed:', e.message);
             }
           }
         }
