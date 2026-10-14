@@ -115,42 +115,6 @@
     .results-container::-webkit-scrollbar { width: 4px; }
     .results-container::-webkit-scrollbar-track { background: transparent; }
     .results-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    .result-item {
-      background: rgba(255,255,255,0.03); border-left: 2px solid rgba(255,255,255,0.2);
-      padding: 0.7rem 0.9rem; border-radius: 1px; font-size: 0.7rem;
-      line-height: 1.55; transition: background 0.2s, border-color 0.2s;
-      animation: fadeIn 0.3s ease; display: flex; flex-direction: column; gap: 0.3rem;
-    }
-    .result-item:hover { background: rgba(255,255,255,0.07); border-left-color: rgba(255,255,255,0.6); }
-    .result-item .source {
-      display: flex; align-items: center; gap: 0.5rem; color: #aaa;
-      font-size: 0.6rem; letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace;
-      flex-wrap: wrap;
-    }
-    .result-item .source .tag {
-      background: rgba(255,255,255,0.1); padding: 0.15rem 0.5rem;
-      border-radius: 1px; font-size: 0.55rem; color: #ccc;
-      border: 1px solid rgba(255,255,255,0.08); text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .result-item .source .tag.gaming { background: rgba(100,150,255,0.15); border-color: rgba(100,150,255,0.3); color: #8ab4ff; }
-    .result-item .source .tag.discord { background: rgba(88,101,242,0.15); border-color: rgba(88,101,242,0.4); color: #7289da; }
-    .result-item .source .tag.steam { background: rgba(23,105,170,0.15); border-color: rgba(23,105,170,0.4); color: #66c0f4; }
-    .result-item .source .tag.social { background: rgba(255,100,100,0.12); border-color: rgba(255,100,100,0.3); color: #ff8a8a; }
-    .result-item .source .tag.breach { background: rgba(255,60,60,0.15); border-color: rgba(255,60,60,0.4); color: #ff6b6b; }
-    .result-item .source .tag.dark { background: rgba(180,60,255,0.12); border-color: rgba(180,60,255,0.3); color: #c48aff; }
-    .result-item .data { color: #e0e0e0; font-weight: 400; word-break: break-word; }
-    .result-item .data .highlight { color: #fff; background: rgba(255,255,255,0.1); padding: 0 0.2rem; border-radius: 1px; }
-    .result-item .data .game-tag {
-      display: inline-block; background: rgba(100,200,100,0.12);
-      border: 1px solid rgba(100,200,100,0.25); color: #8aff8a;
-      padding: 0 0.3rem; border-radius: 1px; font-size: 0.6rem; margin: 0 0.1rem;
-    }
-    .result-item .meta {
-      display: flex; justify-content: space-between; font-size: 0.55rem;
-      color: #555; margin-top: 0.1rem; font-family: 'JetBrains Mono', monospace;
-      letter-spacing: 0.05em;
-    }
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 2.5rem 0.5rem; color: #555;
@@ -209,6 +173,185 @@
       background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 4px);
       pointer-events: none; z-index: 20; opacity: 0.25; mix-blend-mode: overlay;
     }
+
+    /* ============================================= */
+    /* TREE / BRANCH NODE STYLES                     */
+    /* ============================================= */
+    .tree-root {
+      display: flex; flex-direction: column; gap: 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .tree-node {
+      position: relative;
+      padding-left: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .tree-node.level-0 { padding-left: 0; }
+
+    /* vertical connector line */
+    .tree-node.level-1::before,
+    .tree-node.level-2::before {
+      content: "";
+      position: absolute;
+      left: 0.5rem;
+      top: -0.4rem;
+      bottom: 50%;
+      width: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+    .tree-node.level-2::before {
+      background: rgba(255,255,255,0.12);
+    }
+
+    /* horizontal connector */
+    .tree-node.level-1::after,
+    .tree-node.level-2::after {
+      content: "";
+      position: absolute;
+      left: 0.5rem;
+      top: 50%;
+      width: 0.8rem;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+    .tree-node.level-2::after {
+      background: rgba(255,255,255,0.12);
+    }
+
+    .node-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-left: 2px solid rgba(255,255,255,0.3);
+      border-radius: 2px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.68rem;
+      line-height: 1.5;
+      transition: background 0.2s, border-color 0.2s;
+      animation: fadeIn 0.25s ease;
+    }
+    .node-card:hover {
+      background: rgba(255,255,255,0.06);
+      border-left-color: rgba(255,255,255,0.6);
+    }
+
+    /* level accent colors */
+    .tree-node.level-0 .node-card {
+      border-left-color: #ffffff;
+      background: rgba(255,255,255,0.06);
+    }
+    .tree-node.level-1 .node-card {
+      border-left-color: #66c0f4;
+    }
+    .tree-node.level-2 .node-card {
+      border-left-color: #c48aff;
+      background: rgba(180,60,255,0.04);
+      border-color: rgba(180,60,255,0.15);
+    }
+
+    .node-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.35rem;
+      flex-wrap: wrap;
+    }
+    .node-tag {
+      background: rgba(255,255,255,0.1);
+      padding: 0.1rem 0.45rem;
+      border-radius: 1px;
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #ccc;
+    }
+    .node-tag.email   { background: rgba(100,200,100,0.12); border-color: rgba(100,200,100,0.3); color: #8aff8a; }
+    .node-tag.phone   { background: rgba(255,200,60,0.12);  border-color: rgba(255,200,60,0.3);  color: #ffd66b; }
+    .node-tag.steam   { background: rgba(23,105,170,0.15);  border-color: rgba(23,105,170,0.4);  color: #66c0f4; }
+    .node-tag.discord { background: rgba(88,101,242,0.15);  border-color: rgba(88,101,242,0.4);  color: #7289da; }
+    .node-tag.breach  { background: rgba(255,60,60,0.15);   border-color: rgba(255,60,60,0.4);   color: #ff6b6b; }
+    .node-tag.social  { background: rgba(255,100,100,0.12); border-color: rgba(255,100,100,0.3); color: #ff8a8a; }
+
+    .node-label {
+      font-size: 0.62rem;
+      color: #aaa;
+      letter-spacing: 0.05em;
+    }
+
+    .node-data {
+      color: #e0e0e0;
+      font-size: 0.68rem;
+      word-break: break-word;
+    }
+    .node-data .highlight {
+      color: #fff;
+      background: rgba(255,255,255,0.1);
+      padding: 0 0.2rem;
+      border-radius: 1px;
+    }
+
+    .node-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.52rem;
+      color: #555;
+      margin-top: 0.3rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* branch toggle button */
+    .branch-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #ccc;
+      padding: 0.25rem 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 1px;
+      cursor: pointer;
+      margin-top: 0.45rem;
+      transition: all 0.2s;
+    }
+    .branch-toggle:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.4);
+      color: #fff;
+    }
+    .branch-toggle.expanded {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.35);
+      color: #fff;
+    }
+    .branch-toggle .arrow {
+      display: inline-block;
+      transition: transform 0.2s;
+      font-size: 0.7rem;
+    }
+    .branch-toggle.expanded .arrow {
+      transform: rotate(90deg);
+    }
+
+    .branch-children {
+      margin-top: 0.4rem;
+      margin-left: 0.2rem;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .max-depth-label {
+      font-size: 0.5rem;
+      color: #444;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.2rem 0 0 0.5rem;
+      border-left: 1px dashed rgba(255,255,255,0.08);
+      margin-left: 0.5rem;
+    }
+
     @media (max-width: 1100px) { .search-section { width: 480px; max-width: 60vw; } }
     @media (max-width: 850px) {
       .app-container { flex-direction: column-reverse; }
@@ -265,13 +408,13 @@
           <span class="dot done" id="statusDot"></span>
           <span id="statusLabel">READY</span>
         </div>
-        <span id="scanCount">0 SOURCES</span>
+        <span id="scanCount">0 NODES</span>
       </div>
       <div class="results-container" id="resultsContainer">
         <div class="empty-state">
           <div class="icon">◈</div>
           <div>SELECT A VECTOR & ENTER TARGET</div>
-          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">STEAM · BREACH DATA · DISCORD</div>
+          <div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">TREE BRANCH VISUALIZATION · 2 LEVELS DEEP</div>
         </div>
       </div>
       <div class="search-footer">
@@ -320,22 +463,16 @@
 
     const group = new THREE.Group();
 
-    // Main wireframe sphere
     const sphereGeo = new THREE.SphereGeometry(2.2, 36, 24);
     const sphereMat = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.22 });
     group.add(new THREE.Mesh(sphereGeo, sphereMat));
 
-    // Contour outline sphere (extra latitude lines for topographical feel)
     const contourGeo = new THREE.SphereGeometry(2.205, 24, 48);
     const contourMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.08
+      color: 0xffffff, wireframe: true, transparent: true, opacity: 0.08
     });
     group.add(new THREE.Mesh(contourGeo, contourMat));
 
-    // Latitude rings (contour lines)
     const latRingMat = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.15, transparent: true });
     for (let lat = -75; lat <= 75; lat += 15) {
       const phi = (90 - lat) * Math.PI / 180;
@@ -344,20 +481,11 @@
       const points = [];
       for (let i = 0; i <= 48; i++) {
         const theta = (i / 48) * Math.PI * 2;
-        points.push(new THREE.Vector3(
-          radius * Math.cos(theta),
-          y,
-          radius * Math.sin(theta)
-        ));
+        points.push(new THREE.Vector3(radius * Math.cos(theta), y, radius * Math.sin(theta)));
       }
-      const line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(points),
-        latRingMat
-      );
-      group.add(line);
+      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), latRingMat));
     }
 
-    // Particles
     const particleCount = 1800;
     const particlesGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
@@ -372,7 +500,6 @@
     particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     group.add(new THREE.Points(particlesGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.025, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending })));
 
-    // Orbit rings
     const ringMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.2, transparent: true });
     const ring1Points = [];
     for (let i = 0; i <= 64; i++) { const angle = (i/64)*Math.PI*2; ring1Points.push(new THREE.Vector3(Math.cos(angle)*2.5, 0, Math.sin(angle)*2.5)); }
@@ -388,19 +515,16 @@
     for (let i = 0; i <= 64; i++) { const angle = (i/64)*Math.PI*2; ring3Points.push(new THREE.Vector3(Math.cos(angle)*1.2, Math.sin(angle)*2.0, Math.cos(angle)*1.0)); }
     group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ring3Points), ringMaterial));
 
-    // Axis dots
     const dotPositions = [[2.22,0,0],[-2.22,0,0],[0,2.22,0],[0,-2.22,0],[0,0,2.22],[0,0,-2.22]];
     const dotGeo = new THREE.BufferGeometry();
     dotGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(dotPositions.flat()), 3));
     group.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, blending: THREE.AdditiveBlending })));
 
-    // Core
     const core = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, emissive: 0x88aaff }));
     group.add(core);
 
     scene.add(group);
 
-    // Stars
     const starCount = 600;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
@@ -439,7 +563,7 @@
     renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
     // =============================================
-    // SEARCH ENGINE
+    // FAKE DATA TREE ENGINE
     // =============================================
     const searchInput = document.getElementById('searchInput');
     const scanBtn = document.getElementById('scanBtn');
@@ -451,7 +575,7 @@
     const modeTabs = document.querySelectorAll('.mode-tab');
 
     let currentMode = 'email';
-    const WORKER_URL = 'https://osint.agroware2026.workers.dev';
+    let nodeCounter = 0;
 
     const modes = {
       email: {
@@ -461,7 +585,7 @@
         errorMsg: 'INVALID EMAIL FORMAT.'
       },
       steam: {
-        label: 'STEAM ID / VANITY / PROFILE URL',
+        label: 'STEAM ID / VANITY',
         placeholder: '76561198... or custom URL',
         validate: (v) => v.length >= 3,
         errorMsg: 'ENTER A VALID STEAM ID OR VANITY URL.'
@@ -492,181 +616,318 @@
       statusDot.className = 'dot ' + state;
       statusLabel.textContent = label;
     }
-    function setScanCount(count) { scanCount.textContent = count + ' SOURCES'; }
+    function setNodeCount(count) { scanCount.textContent = count + ' NODES'; }
     function clearResults() {
-      resultsContainer.innerHTML = `<div class="empty-state"><div class="icon">◈</div><div>SELECT A VECTOR & ENTER TARGET</div><div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">STEAM · BREACH DATA · DISCORD</div></div>`;
-      setScanCount(0); setStatus('done', 'READY');
+      resultsContainer.innerHTML = `<div class="empty-state"><div class="icon">◈</div><div>SELECT A VECTOR & ENTER TARGET</div><div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">TREE BRANCH VISUALIZATION · 2 LEVELS DEEP</div></div>`;
+      setNodeCount(0); setStatus('done', 'READY');
+      nodeCounter = 0;
     }
     function showError(msg) {
       resultsContainer.innerHTML = `<div class="error-message">${msg}</div>`;
-      setScanCount(0); setStatus('error', 'ERROR');
+      setNodeCount(0); setStatus('error', 'ERROR');
     }
 
-    function renderResult(sourceName, tagClass, text, confidence, date) {
-      const el = document.createElement('div');
-      el.className = 'result-item';
-      el.innerHTML = `
-        <div class="source">
-          <span class="tag ${tagClass}">${tagClass.toUpperCase()}</span>
-          <span>${sourceName}</span>
-        </div>
-        <div class="data">${text}</div>
-        <div class="meta">
-          <span>CONFIDENCE: ${confidence}%</span>
-          <span>${date || 'LIVE'}</span>
-        </div>
+    // --- Random fake data generators ---
+    const firstNames = ['John','Jane','Alex','Sam','Chris','Jordan','Taylor','Morgan','Casey','Riley','Avery','Quinn','Dakota','Skyler','Reese'];
+    const lastNames  = ['Smith','Doe','Johnson','Brown','Lee','Garcia','Miller','Davis','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White'];
+    const cities     = ['New York','London','Tokyo','Berlin','Toronto','Sydney','Paris','Amsterdam','Seoul','Austin'];
+    const carriers   = ['Verizon','AT&T','T-Mobile','Vodafone','Orange','EE','O2','Three'];
+    const games      = ['Counter-Strike 2','Valorant','League of Legends','Dota 2','Fortnite','Apex Legends','Rainbow Six Siege','Rust','Escape from Tarkov'];
+    const ranks      = ['Bronze','Silver','Gold','Platinum','Diamond','Master','Grandmaster','Immortal','Radiant'];
+    const regions    = ['NA','EU','ASIA','SA','OCE','ME'];
+    const breachNames= ['Collection #1','AntiPublic','Exploit.in','Adobe','Dropbox','MyFitnessPal','LinkedIn Scrape','Zynga'];
+    const servers    = ['Gaming Hub','ESports Central','Chill Zone','Competitive Arena','Speedrun Society','Trade Post'];
+    const discordTags= ['Nitro','Early Supporter','HypeSquad','Bug Hunter','Verified Bot'];
+
+    function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function fakePhone() {
+      return `+1 (${randInt(200,999)}) ${randInt(200,999)}-${randInt(1000,9999)}`;
+    }
+    function fakeSteamId() {
+      return '7656119' + String(randInt(100000000, 999999999));
+    }
+    function fakeDiscordId() {
+      return String(randInt(100000000000000000, 999999999999999999));
+    }
+    function fakeEmail() {
+      return `${rand(firstNames).toLowerCase()}.${rand(lastNames).toLowerCase()}${randInt(1,99)}@${rand(['gmail.com','outlook.com','protonmail.com','yahoo.com'])}`;
+    }
+    function fakeFullName() { return `${rand(firstNames)} ${rand(lastNames)}`; }
+
+    // --- Node factories for each level ---
+    function makeRootNode(mode, value) {
+      const tagMap = { email: 'email', steam: 'steam', discord: 'discord' };
+      let dataHtml = '';
+      let label = '';
+
+      if (mode === 'email') {
+        label = 'Email Target';
+        dataHtml = `<span class="highlight">${value}</span>`;
+      } else if (mode === 'steam') {
+        label = 'Steam Target';
+        dataHtml = `SteamID: <span class="highlight">${value}</span>`;
+      } else {
+        label = 'Discord Target';
+        dataHtml = `Discord ID: <span class="highlight">${value}</span>`;
+      }
+
+      return {
+        id: ++nodeCounter,
+        level: 0,
+        tag: tagMap[mode],
+        label: label,
+        data: dataHtml,
+        confidence: 100,
+        children: [],
+        hasChildren: true
+      };
+    }
+
+    function generateLevel1(parentNode, mode, value) {
+      // Level 1 is a mixed bag of things connected to the root
+      const children = [];
+      const pool = [];
+
+      // Always include a phone number
+      pool.push({
+        tag: 'phone',
+        label: 'Phone Number',
+        data: `<span class="highlight">${fakePhone()}</span> · ${rand(carriers)}`,
+        confidence: randInt(70, 95),
+        kind: 'phone'
+      });
+
+      // Add a secondary email if root is not email
+      if (mode !== 'email') {
+        pool.push({
+          tag: 'email',
+          label: 'Linked Email',
+          data: `<span class="highlight">${fakeEmail()}</span>`,
+          confidence: randInt(65, 90),
+          kind: 'email'
+        });
+      }
+
+      // Add a Discord ID
+      pool.push({
+        tag: 'discord',
+        label: 'Discord Account',
+        data: `ID: <span class="highlight">${fakeDiscordId()}</span> · Tag: ${rand(discordTags)}`,
+        confidence: randInt(70, 92),
+        kind: 'discord'
+      });
+
+      // Add breach data
+      pool.push({
+        tag: 'breach',
+        label: 'Breach Record',
+        data: `Found in <span class="highlight">${rand(breachNames)}</span> · ${randInt(1, 50)} records`,
+        confidence: randInt(60, 88),
+        kind: 'breach'
+      });
+
+      // Add a social handle
+      pool.push({
+        tag: 'social',
+        label: 'Social Handle',
+        data: `@${rand(firstNames).toLowerCase()}${randInt(10,999)} on ${rand(['Twitter/X','Instagram','Reddit','GitHub'])}`,
+        confidence: randInt(55, 85),
+        kind: 'social'
+      });
+
+      // Pick 2-3 random children
+      const count = randInt(2, 3);
+      const shuffled = pool.sort(() => Math.random() - 0.5).slice(0, count);
+
+      shuffled.forEach(item => {
+        children.push({
+          id: ++nodeCounter,
+          level: 1,
+          tag: item.tag,
+          label: item.label,
+          data: item.data,
+          confidence: item.confidence,
+          parentKind: item.kind,
+          children: [],
+          hasChildren: true // can expand one more time
+        });
+      });
+
+      return children;
+    }
+
+    function generateLevel2(parentNode) {
+      // Level 2: things connected to the level-1 node. Hard stop after this.
+      const children = [];
+      const kind = parentNode.parentKind;
+
+      if (kind === 'phone') {
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'steam', label: 'Steam Account',
+          data: `SteamID: <span class="highlight">${fakeSteamId()}</span> · ${rand(regions)}`,
+          confidence: randInt(60, 85), children: [], hasChildren: false
+        });
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'social', label: 'Carrier Lookup',
+          data: `Registered to <span class="highlight">${fakeFullName()}</span> · ${rand(cities)}`,
+          confidence: randInt(55, 80), children: [], hasChildren: false
+        });
+      } else if (kind === 'discord') {
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'steam', label: 'Steam Linked',
+          data: `SteamID: <span class="highlight">${fakeSteamId()}</span>`,
+          confidence: randInt(60, 85), children: [], hasChildren: false
+        });
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'gaming' in {} ? 'gaming' : 'social', label: 'Game Activity',
+          data: `Playing <span class="highlight">${rand(games)}</span> · Rank ${rand(ranks)}`,
+          confidence: randInt(55, 80), children: [], hasChildren: false
+        });
+      } else if (kind === 'email') {
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'breach', label: 'Password Leak',
+          data: `Hash prefix: <span class="highlight">${Math.random().toString(36).substring(2,12)}</span>`,
+          confidence: randInt(60, 85), children: [], hasChildren: false
+        });
+      } else if (kind === 'breach') {
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'email', label: 'Recovery Email',
+          data: `<span class="highlight">${fakeEmail()}</span>`,
+          confidence: randInt(55, 80), children: [], hasChildren: false
+        });
+      } else if (kind === 'social') {
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'steam', label: 'Gaming Profile',
+          data: `SteamID: <span class="highlight">${fakeSteamId()}</span> · ${rand(games)}`,
+          confidence: randInt(55, 80), children: [], hasChildren: false
+        });
+      } else {
+        children.push({
+          id: ++nodeCounter, level: 2, tag: 'social', label: 'Cross-Reference',
+          data: `Linked to <span class="highlight">${fakeFullName()}</span>`,
+          confidence: randInt(50, 75), children: [], hasChildren: false
+        });
+      }
+
+      return children;
+    }
+
+    // --- Render tree ---
+    function renderTree(root) {
+      resultsContainer.innerHTML = '';
+      const tree = document.createElement('div');
+      tree.className = 'tree-root';
+      tree.appendChild(renderNode(root));
+      resultsContainer.appendChild(tree);
+      setNodeCount(nodeCounter);
+    }
+
+    function renderNode(node) {
+      const nodeEl = document.createElement('div');
+      nodeEl.className = `tree-node level-${node.level}`;
+
+      const card = document.createElement('div');
+      card.className = 'node-card';
+
+      const header = document.createElement('div');
+      header.className = 'node-header';
+      header.innerHTML = `
+        <span class="node-tag ${node.tag}">${node.tag}</span>
+        <span class="node-label">${node.label}</span>
       `;
-      resultsContainer.appendChild(el);
-      resultsContainer.scrollTop = resultsContainer.scrollHeight;
+
+      const data = document.createElement('div');
+      data.className = 'node-data';
+      data.innerHTML = node.data;
+
+      const meta = document.createElement('div');
+      meta.className = 'node-meta';
+      meta.innerHTML = `
+        <span>CONFIDENCE: ${node.confidence}%</span>
+        <span>NODE #${node.id}</span>
+      `;
+
+      card.appendChild(header);
+      card.appendChild(data);
+      card.appendChild(meta);
+
+      // Branch toggle button
+      if (node.hasChildren && node.level < 2) {
+        const btn = document.createElement('button');
+        btn.className = 'branch-toggle';
+        btn.innerHTML = `<span class="arrow">▶</span> EXPAND BRANCH`;
+        btn.dataset.expanded = 'false';
+
+        const childContainer = document.createElement('div');
+        childContainer.className = 'branch-children';
+        childContainer.style.display = 'none';
+
+        btn.addEventListener('click', () => {
+          const expanded = btn.dataset.expanded === 'true';
+          if (!expanded) {
+            // Generate children if not already generated
+            if (node.children.length === 0) {
+              if (node.level === 0) {
+                node.children = generateLevel1(node, currentMode, searchInput.value.trim());
+              } else if (node.level === 1) {
+                node.children = generateLevel2(node);
+              }
+            }
+            childContainer.innerHTML = '';
+            node.children.forEach(child => {
+              childContainer.appendChild(renderNode(child));
+            });
+            childContainer.style.display = 'block';
+            btn.dataset.expanded = 'true';
+            btn.classList.add('expanded');
+            btn.innerHTML = `<span class="arrow">▶</span> COLLAPSE BRANCH`;
+          } else {
+            childContainer.style.display = 'none';
+            btn.dataset.expanded = 'false';
+            btn.classList.remove('expanded');
+            btn.innerHTML = `<span class="arrow">▶</span> EXPAND BRANCH`;
+          }
+          setNodeCount(nodeCounter);
+        });
+
+        card.appendChild(btn);
+        nodeEl.appendChild(card);
+        nodeEl.appendChild(childContainer);
+      } else {
+        // Level 2 — hard stop, no expand button
+        if (node.level === 2) {
+          const stopLabel = document.createElement('div');
+          stopLabel.className = 'max-depth-label';
+          stopLabel.textContent = '— MAX DEPTH REACHED —';
+          card.appendChild(stopLabel);
+        }
+        nodeEl.appendChild(card);
+      }
+
+      return nodeEl;
     }
 
-    async function performScan(target) {
+    // --- Main scan ---
+    function performScan(target) {
       const cfg = modes[currentMode];
       if (!cfg.validate(target)) { showError(cfg.errorMsg); return; }
 
       scanBtn.disabled = true;
       scanBtn.innerHTML = '<span class="spinner"></span> SCAN';
-      setStatus('scanning', 'SCANNING');
+      setStatus('scanning', 'BUILDING TREE');
       resultsContainer.innerHTML = '';
-      setScanCount(0);
+      nodeCounter = 0;
 
-      try {
-        let found = 0;
-
-        // ----- STEAM -----
-        if (currentMode === 'steam') {
-          setStatus('scanning', 'FETCHING STEAM...');
-          const res = await fetch(`${WORKER_URL}/steam?q=${encodeURIComponent(target)}`);
-          if (!res.ok) throw new Error(`Steam lookup failed (${res.status})`);
-          const data = await res.json();
-
-          const steam = data.steam || {};
-          const ids = data.ids || {};
-          const bans = data.bans || {};
-
-          if (steam.personaname || ids.steamid) {
-            renderResult('Steam Profile', 'steam',
-              `Persona: <span class="highlight">${steam.personaname || 'N/A'}</span>`, 98, 'LIVE');
-            if (ids.steamid) renderResult('Steam ID', 'steam',
-              `SteamID64: <span class="highlight">${ids.steamid}</span>`, 99, 'LIVE');
-            if (steam.profileurl) renderResult('Steam Profile', 'steam',
-              `Profile URL: <span class="highlight">${steam.profileurl}</span>`, 99, 'LIVE');
-            if (steam.personastate !== undefined) {
-              const states = ['Offline','Online','Busy','Away','Snooze','Looking to trade','Looking to play'];
-              renderResult('Steam Status', 'steam',
-                `Status: <span class="highlight">${states[steam.personastate] || steam.personastate}</span>`, 95, 'LIVE');
-            }
-            if (steam.gameextrainfo) {
-              renderResult('In-Game', 'gaming',
-                `Currently playing: <span class="game-tag">${steam.gameextrainfo}</span>`, 99, 'LIVE');
-            }
-            if (steam.avatarfull) {
-              renderResult('Avatar', 'steam',
-                `<img src="${steam.avatarfull}" style="max-width:64px;border:1px solid rgba(255,255,255,0.2);border-radius:2px;margin-top:4px;">`, 99, 'LIVE');
-            }
-            if (bans.VACBanned) {
-              renderResult('VAC', 'breach',
-                `VAC BANNED — <span class="highlight">${bans.NumberOfVACBans || '?'} bans</span> · ${bans.DaysSinceLastBan || '?'} days ago`, 99, 'LIVE');
-            }
-            if (bans.CommunityBanned) {
-              renderResult('Bans', 'breach',
-                `Community banned: <span class="highlight">YES</span>`, 99, 'LIVE');
-            }
-            found = 6;
-          } else {
-            renderResult('Steam', 'steam', 'No public Steam profile found.', 0, 'LIVE');
-          }
-        }
-
-        // ----- EMAIL -----
-        if (currentMode === 'email') {
-          // HudsonRock
-          setStatus('scanning', 'HUDSONROCK...');
-          try {
-            const hrRes = await fetch(`${WORKER_URL}/hudsonrock?email=${encodeURIComponent(target)}`);
-            if (hrRes.ok) {
-              const hr = await hrRes.json();
-              if (hr && hr.stealers && hr.stealers.length > 0) {
-                const s = hr.stealers[0];
-                renderResult('HudsonRock', 'breach',
-                  `Infostealer: <span class="highlight">${s.stealer_family || 'Unknown'}</span>`, 92, 'LIVE');
-                if (s.computer_name) renderResult('HudsonRock', 'breach',
-                  `Computer: <span class="highlight">${s.computer_name}</span> · OS: <span class="highlight">${s.os || 'N/A'}</span>`, 88, 'LIVE');
-                if (s.ip_address) renderResult('HudsonRock', 'breach',
-                  `IP: <span class="highlight">${s.ip_address}</span>`, 80, 'LIVE');
-                if (s.top_logins && s.top_logins.length) renderResult('HudsonRock', 'breach',
-                  `Leaked logins: <span class="highlight">${s.top_logins.slice(0,5).join(', ')}</span>`, 85, 'LIVE');
-                found += 3;
-              } else {
-                renderResult('HudsonRock', 'breach', 'No infostealer compromise found.', 0, 'LIVE');
-              }
-            }
-          } catch(e) { console.warn('HudsonRock failed:', e.message); }
-
-          // Gravatar
-          setStatus('scanning', 'GRAVATAR...');
-          try {
-            const gvRes = await fetch(`${WORKER_URL}/gravatar?email=${encodeURIComponent(target)}`);
-            if (gvRes.ok) {
-              const gv = await gvRes.json();
-              if (gv && gv.displayName) {
-                renderResult('Gravatar', 'social',
-                  `Display name: <span class="highlight">${gv.displayName}</span>`, 95, 'LIVE');
-                if (gv.aboutMe) renderResult('Gravatar', 'social',
-                  `Bio: <span class="highlight">${gv.aboutMe.substring(0,120)}</span>`, 90, 'LIVE');
-                if (gv.currentLocation) renderResult('Gravatar', 'social',
-                  `Location: <span class="highlight">${gv.currentLocation}</span>`, 90, 'LIVE');
-                if (gv.verifiedAccounts && gv.verifiedAccounts.length) {
-                  const services = gv.verifiedAccounts.map(a => a.service_type || a.service).filter(Boolean).join(', ');
-                  if (services) renderResult('Gravatar', 'social',
-                    `Verified: <span class="highlight">${services}</span>`, 90, 'LIVE');
-                }
-                found += 2;
-              } else {
-                renderResult('Gravatar', 'social', 'No public Gravatar profile.', 0, 'LIVE');
-              }
-            }
-          } catch(e) { console.warn('Gravatar failed:', e.message); }
-        }
-
-        // ----- DISCORD -----
-        if (currentMode === 'discord') {
-          setStatus('scanning', 'DISCORD...');
-          const dcRes = await fetch(`${WORKER_URL}/discord?id=${encodeURIComponent(target)}`);
-          if (dcRes.status === 401) {
-            showError('Discord bot token not configured in Worker.');
-            scanBtn.disabled = false;
-            scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.85rem;">↗</span>';
-            return;
-          }
-          if (dcRes.ok) {
-            const dc = await dcRes.json();
-            if (dc && dc.id) {
-              renderResult('Discord', 'discord',
-                `Username: <span class="highlight">${dc.username || 'N/A'}</span>`, 99, 'LIVE');
-              if (dc.global_name) renderResult('Discord', 'discord',
-                `Display name: <span class="highlight">${dc.global_name}</span>`, 99, 'LIVE');
-              renderResult('Discord', 'discord',
-                `Avatar: <span class="highlight">${dc.avatar ? 'Custom' : 'Default'}</span>`, 90, 'LIVE');
-              if (dc.banner) renderResult('Discord', 'discord',
-                `Banner: <span class="highlight">Present</span>`, 85, 'LIVE');
-              found = 3;
-            }
-          }
-        }
-
-        setScanCount(found);
-        setStatus('done', found > 0 ? 'COMPLETE' : 'CLEAN');
-        if (found === 0) {
-          resultsContainer.innerHTML = `<div class="empty-state"><div class="icon">✓</div><div>NO RESULTS FOUND</div><div style="font-size:0.55rem; color:#444; margin-top:0.2rem;">TARGET APPEARS CLEAN IN SCANNED SOURCES</div></div>`;
-        }
-      } catch (err) {
-        showError('SCAN FAILED: ' + err.message);
-        console.error(err);
-      }
-
-      scanBtn.disabled = false;
-      scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.85rem;">↗</span>';
+      // Simulate short delay
+      setTimeout(() => {
+        const root = makeRootNode(currentMode, target);
+        nodeCounter = 1;
+        renderTree(root);
+        setStatus('done', 'ROOT NODE READY');
+        scanBtn.disabled = false;
+        scanBtn.innerHTML = '<span>SCAN</span><span style="font-size:0.85rem;">↗</span>';
+      }, 600);
     }
 
     scanBtn.addEventListener('click', () => {
